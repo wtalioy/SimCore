@@ -2,16 +2,16 @@ package SimCore
 
 import chisel3._
 import chisel3.util._
-import chiseltest._
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import SimCore.cpu.components.BrUnit
 import SimCore.cpu.utils.BranchTypes
 
-class BrUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
+class BrUnitTest extends AnyFlatSpec with ChiselSim {
   behavior of "BrUnit"
 
   it should "correctly evaluate BEQ condition" in {
-    test(new BrUnit) { dut =>
+    simulate(new BrUnit) { dut =>
       // Equal values should take the branch
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(5.U)
@@ -31,7 +31,7 @@ class BrUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "correctly evaluate BNE condition" in {
-    test(new BrUnit) { dut =>
+    simulate(new BrUnit) { dut =>
       // Unequal values should take the branch
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(10.U)
@@ -51,7 +51,7 @@ class BrUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "correctly evaluate BLT condition" in {
-    test(new BrUnit) { dut =>
+    simulate(new BrUnit) { dut =>
       // rs1 < rs2 should take the branch (signed comparison)
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(10.U)
@@ -79,7 +79,7 @@ class BrUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "correctly evaluate BGE condition" in {
-    test(new BrUnit) { dut =>
+    simulate(new BrUnit) { dut =>
       // rs1 >= rs2 should take the branch (signed comparison)
       dut.io.rs1_data.poke(10.U)
       dut.io.rs2_data.poke(5.U)
@@ -107,7 +107,7 @@ class BrUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "not take branch when is_branch is false" in {
-    test(new BrUnit) { dut =>
+    simulate(new BrUnit) { dut =>
       // Even if the condition is true, branch should not be taken if is_branch is false
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(5.U)
@@ -117,4 +117,4 @@ class BrUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
       dut.io.branch_taken.expect(false.B)
     }
   }
-} 
+}

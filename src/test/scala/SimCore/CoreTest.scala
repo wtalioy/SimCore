@@ -2,14 +2,15 @@ package SimCore
 
 import chisel3._
 import chisel3.util._
-import chiseltest._
+// import chiseltest._ // Removed
+import chisel3.simulator.scalatest.ChiselSim // Added
 import org.scalatest.flatspec.AnyFlatSpec
 
-class CoreTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
+class CoreTest extends AnyFlatSpec with ChiselSim { // Updated
   behavior of "Core"
 
   it should "instantiate without errors" in {
-    test(new SimCore.cpu.Core) { dut =>
+    simulate(new SimCore.cpu.Core) { dut => // Updated
       // Just test that the core can be instantiated
       dut.clock.step(1)
     }

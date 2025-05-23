@@ -2,18 +2,19 @@ package SimCore
 
 import chisel3._
 import chisel3.util._
-import chiseltest._
+// import chiseltest._ // Removed
+import chisel3.simulator.scalatest.ChiselSim // Added
 import org.scalatest.flatspec.AnyFlatSpec
 import SimCore.cpu.stages.IDU
 import SimCore.cpu.utils.ALUOps
 import SimCore.cpu.utils.BranchTypes
 import SimCore.cpu.utils.PCNextSelVals
 
-class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
+class IDUTest extends AnyFlatSpec with ChiselSim { // Updated
   behavior of "IDU"
 
   it should "decode R-type ADD instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // ADD rd, rs1, rs2 (R-type)
       // opcode=0x00, rs1=5, rs2=6, rd=7, funct=0x20 (ADD)
       val instr = "b00000000101001100111000000100000".U
@@ -42,7 +43,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode I-type ADDI instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // ADDI rt, rs, imm (I-type)
       // opcode=0x08, rs=5, rt=7, imm=0x123
       val instr = "b00100000101001110000000100100011".U
@@ -71,7 +72,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode LW instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // LW rt, offset(rs) (I-type)
       // opcode=0x23, rs=5, rt=7, offset=0x100
       val instr = "b10001100101001110000000100000000".U
@@ -99,7 +100,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode SW instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // SW rt, offset(rs) (I-type)
       // opcode=0x2B, rs=5, rt=7, offset=0x100
       val instr = "b10101100101001110000000100000000".U
@@ -127,7 +128,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode BEQ instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // BEQ rs, rt, offset (I-type branch)
       // opcode=0x04, rs=5, rt=7, offset=0x100
       val instr = "b00010000101001110000000100000000".U
@@ -152,7 +153,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode J instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // J target (J-type)
       // opcode=0x02, target=0x123456
       val instr = "b00001000000000010001000110101010".U
@@ -174,7 +175,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode JAL instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // JAL target (J-type)
       // opcode=0x03, target=0x123456
       val instr = "b00001100000000010001000110101010".U
@@ -197,7 +198,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode JR instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // JR rs (R-type jump)
       // opcode=0x00, rs=5, rt=0, rd=0, shamt=0, funct=0x08 (JR)
       val instr = "b00000000101000000000000000001000".U
@@ -221,7 +222,7 @@ class IDUTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "decode NOP instruction correctly" in {
-    test(new IDU) { dut =>
+    simulate(new IDU) { dut => // Updated
       // NOP (SLL r0, r0, 0)
       // opcode=0x00, rs=0, rt=0, rd=0, shamt=0, funct=0x00 (SLL)
       val instr = "b00000000000000000000000000000000".U

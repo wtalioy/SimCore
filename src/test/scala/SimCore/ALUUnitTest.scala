@@ -2,16 +2,17 @@ package SimCore
 
 import chisel3._
 import chisel3.util._
-import chiseltest._
+// import chiseltest._ // Removed
+import chisel3.simulator.scalatest.ChiselSim // Added
 import org.scalatest.flatspec.AnyFlatSpec
 import SimCore.cpu.components.ALUUnit
 import SimCore.cpu.utils.ALUOps
 
-class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
+class ALUUnitTest extends AnyFlatSpec with ChiselSim { // Updated
   behavior of "ALUUnit"
 
   it should "perform ADD operation correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       dut.io.alu_op.poke(ALUOps.ADD)
       dut.io.operand1.poke(5.U)
       dut.io.operand2.poke(3.U)
@@ -21,7 +22,7 @@ class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "perform SUB operation correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       dut.io.alu_op.poke(ALUOps.SUB)
       dut.io.operand1.poke(10.U)
       dut.io.operand2.poke(4.U)
@@ -31,7 +32,7 @@ class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "perform AND operation correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       dut.io.alu_op.poke(ALUOps.AND)
       dut.io.operand1.poke(0x0F.U) // 0000 1111
       dut.io.operand2.poke(0x33.U) // 0011 0011
@@ -41,7 +42,7 @@ class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "perform OR operation correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       dut.io.alu_op.poke(ALUOps.OR)
       dut.io.operand1.poke(0x0F.U) // 0000 1111
       dut.io.operand2.poke(0x33.U) // 0011 0011
@@ -51,7 +52,7 @@ class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "perform XOR operation correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       dut.io.alu_op.poke(ALUOps.XOR)
       dut.io.operand1.poke(0x0F.U) // 0000 1111
       dut.io.operand2.poke(0x33.U) // 0011 0011
@@ -61,7 +62,7 @@ class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "perform NOR operation correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       dut.io.alu_op.poke(ALUOps.NOR)
       dut.io.operand1.poke(0x0F.U) // 0000 1111
       dut.io.operand2.poke(0x33.U) // 0011 0011
@@ -73,7 +74,7 @@ class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "perform SLT operation correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       // Test when operand1 < operand2
       dut.io.alu_op.poke(ALUOps.SLT)
       dut.io.operand1.poke(5.U)
@@ -98,11 +99,11 @@ class ALUUnitTest extends AnyFlatSpec with chiseltest.ChiselScalatestTester {
   }
 
   it should "perform shift operations correctly" in {
-    test(new ALUUnit) { dut =>
+    simulate(new ALUUnit) { dut => // Updated
       // SLL - Shift Left Logical
       dut.io.alu_op.poke(ALUOps.SLL)
       dut.io.operand1.poke(0x1.U)
-      dut.io.operand2.poke(4.U)
+      dut.io.operand2.poke(4.U) // This is shamt, needs to be connected to lower 5 bits of operand2 if used as shamt in MIPS
       dut.clock.step(1)
       dut.io.result.expect(0x10.U)
 
