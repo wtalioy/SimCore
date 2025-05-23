@@ -15,7 +15,7 @@ import mill.bsp._
 
 object SimCore extends SbtModule { m =>
   override def millSourcePath = super.millSourcePath / os.up
-  override def scalaVersion = "3.3.6"
+  override def scalaVersion = "2.13.16"
   override def scalacOptions = Seq(
     "-language:reflectiveCalls",
     "-deprecation",
@@ -30,6 +30,8 @@ object SimCore extends SbtModule { m =>
     ivy"org.chipsalliance:::chisel-plugin:7.0.0-RC1",
   )
   object test extends SbtTests with TestModule.ScalaTest {
+    // This setup supports tests written using chisel3.simulator.scalatest.ChiselSim,
+    // which is part of the chisel:7.0.0-RC1 dependency inherited from the main module.
     override def ivyDeps = m.ivyDeps() ++ Agg(
       ivy"org.scalatest::scalatest::3.2.19"
     )
