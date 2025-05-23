@@ -95,10 +95,10 @@ class Core extends Module {
   // --- Pipeline Connections ---
 
   // IFU <-> IBus (Top Level IO)
-  ifu.io.ibus_req_valid <> io.ibus_req_valid
-  ifu.io.ibus_req_addr <> io.ibus_req_addr
-  ifu.io.ibus_resp_valid <> io.ibus_resp_valid
-  ifu.io.ibus_resp_data <> io.ibus_resp_data
+  ifu.io.ibus.req_valid <> io.ibus_req_valid
+  ifu.io.ibus.req_addr <> io.ibus_req_addr
+  ifu.io.ibus.resp_valid <> io.ibus_resp_valid
+  ifu.io.ibus.resp_data <> io.ibus_resp_data
   ifu.io.redirect_valid := exeu.io.redirect_valid_out // EXEU redirect directly to IFU
   ifu.io.redirect_target := exeu.io.redirect_target_out
 
@@ -134,13 +134,13 @@ class Core extends Module {
 
   // Forwarding Muxes for EXEU inputs
   val forwarded_rs1_data = MuxLookup(hdu.io.forward_A_select,
-                                   idex_reg.io.out.rs1_data, // Default: NO_FWD
+                                   idex_reg.io.out.rs1_data)( // Default: NO_FWD
                                    Seq(
                                      ForwardingSelect.FWD_FROM_EXMEM -> exmem_reg.io.out.wb_data_from_alu,
                                      ForwardingSelect.FWD_FROM_MEMWB -> memwb_reg.io.out.data_to_wb
                                    ))
   val forwarded_rs2_data = MuxLookup(hdu.io.forward_B_select,
-                                   idex_reg.io.out.rs2_data, // Default: NO_FWD
+                                   idex_reg.io.out.rs2_data)( // Default: NO_FWD
                                    Seq(
                                      ForwardingSelect.FWD_FROM_EXMEM -> exmem_reg.io.out.wb_data_from_alu,
                                      ForwardingSelect.FWD_FROM_MEMWB -> memwb_reg.io.out.data_to_wb
