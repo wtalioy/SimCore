@@ -69,7 +69,7 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
       dut.io.branch_taken.expect(false.B)
 
       // Test with negative values
-      dut.io.rs1_data.poke(-5.S.asUInt)
+      dut.io.rs1_data.poke("h80000003".U)
       dut.io.rs2_data.poke(5.U)
       dut.io.is_branch.poke(true.B)
       dut.io.branch_type.poke(BranchTypes.BLT)
