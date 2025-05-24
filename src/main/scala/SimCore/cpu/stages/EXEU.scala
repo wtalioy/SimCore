@@ -16,7 +16,7 @@ class EXEU extends Module {
   val io = IO(new Bundle {
     val valid_in = Input(Bool())
     // Data inputs (still needed individually)
-    val exe_req_pc = Input(UInt(32.W)) 
+    val exe_req_pc = Input(UInt(32.W))
     val exe_req_rs1_data = Input(UInt(32.W))
     val exe_req_rs2_data = Input(UInt(32.W))
     val exe_req_rd_addr = Input(UInt(5.W))
@@ -38,7 +38,7 @@ class EXEU extends Module {
     val redirect_target_out = Output(UInt(32.W))
 
     // DBus interface (simplified)
-    val dbus_req_valid = Output(Bool())
+    val dbus_req_ready = Output(Bool())
     val dbus_req_addr = Output(UInt(32.W))
     val dbus_req_wdata = Output(UInt(32.W))
     val dbus_req_wen = Output(Bool()) // Write enable for store
@@ -47,11 +47,12 @@ class EXEU extends Module {
   })
 
   val aluUnit = Module(new ALUUnit())
-  val brUnit  = Module(new BrUnit())
+  val brUnit = Module(new BrUnit())
   val memUnit = Module(new MemUnit())
 
   // ALU Operand Mux
-  val alu_operand2 = Mux(io.exe_req_ctrl.alu_src2_is_imm, io.exe_req_imm, io.exe_req_rs2_data)
+  val alu_operand2 =
+    Mux(io.exe_req_ctrl.alu_src2_is_imm, io.exe_req_imm, io.exe_req_rs2_data)
 
   // Connect inputs to functional units
   aluUnit.io.alu_op := io.exe_req_ctrl.alu_op
@@ -60,7 +61,7 @@ class EXEU extends Module {
 
   // Branch Unit connections
   brUnit.io.rs1_data := io.exe_req_rs1_data
-  brUnit.io.rs2_data := io.exe_req_rs2_data 
+  brUnit.io.rs2_data := io.exe_req_rs2_data
   brUnit.io.is_branch := io.exe_req_ctrl.is_branch
   brUnit.io.branch_type := io.exe_req_ctrl.branch_type
   // For MIPS, branch target calculation is PC+4 + offset. We'll calculate it below.
@@ -70,7 +71,6 @@ class EXEU extends Module {
   brUnit.io.is_jump := false.B // BrUnit only handles conditional branches based on its current setup
   brUnit.io.imm := 0.U // Not used by BrUnit in this configuration
 
-
   // Mem Unit connections
   // For LW/SW, address is rs1_data + imm. This is calculated by ALU.
   memUnit.io.addr := aluUnit.io.result
@@ -78,7 +78,7 @@ class EXEU extends Module {
   memUnit.io.is_load := io.exe_req_ctrl.is_load
   memUnit.io.is_store := io.exe_req_ctrl.is_store
 
-  io.dbus_req_valid := memUnit.io.dbus_req_valid
+  io.dbus_req_ready := memUnit.io.dbus_req_ready
   io.dbus_req_addr := memUnit.io.dbus_req_addr
   io.dbus_req_wdata := memUnit.io.dbus_req_wdata
   io.dbus_req_wen := memUnit.io.dbus_req_wen
@@ -93,19 +93,26 @@ class EXEU extends Module {
   // MIPS Specific Target Calculations
   // Branch target: PC of branch instr + 4 + (sign_extended_imm * 4)
   // imm is already sign-extended from IDU, and it's the word offset for MIPS branches.
-  val branch_offset = (io.exe_req_imm.asSInt << 2).asUInt // imm is offset, shift by 2 for byte addr
+  val branch_offset =
+    (io.exe_req_imm.asSInt << 2).asUInt // imm is offset, shift by 2 for byte addr
   val mips_branch_target = io.exe_req_pc + 4.U + branch_offset
 
   // Jump Register (JR) target is from rs1_data (which ALU can pass through if op=COPY_A)
   // J/JAL target is directly from IDU (now via ctrl bundle)
-  val actual_jump_target = Mux(io.exe_req_ctrl.alu_op === ALUOps.COPY_A && io.exe_req_ctrl.is_jump && !io.exe_req_ctrl.is_jal,
-                               alu_result, // For JR, target is in rs1 (passed via ALU result)
-                               io.exe_req_ctrl.jump_target_from_idu) // For J/JAL
+  val actual_jump_target = Mux(
+    io.exe_req_ctrl.alu_op === ALUOps.COPY_A && io.exe_req_ctrl.is_jump && !io.exe_req_ctrl.is_jal,
+    alu_result, // For JR, target is in rs1 (passed via ALU result)
+    io.exe_req_ctrl.jump_target_from_idu
+  ) // For J/JAL
 
   // Writeback data selection
-  val jal_return_address = io.exe_req_pc + 4.U // For MIPS, JAL saves PC+4 (no delay slot in this model)
-  io.exe_resp_data := Mux(io.exe_req_ctrl.is_jal, jal_return_address,
-                        Mux(io.exe_req_ctrl.mem_to_reg, mem_result, alu_result))
+  val jal_return_address =
+    io.exe_req_pc + 4.U // For MIPS, JAL saves PC+4 (no delay slot in this model)
+  io.exe_resp_data := Mux(
+    io.exe_req_ctrl.is_jal,
+    jal_return_address,
+    Mux(io.exe_req_ctrl.mem_to_reg, mem_result, alu_result)
+  )
 
   io.exe_resp_rd_addr := io.exe_req_rd_addr
 
@@ -116,17 +123,19 @@ class EXEU extends Module {
   io.valid_out := io.valid_in && !io.stall_in
   // Reg write enable: from IDU, but disable if stalled, or if it's a taken branch/jump that doesn't write (like BEQ, J)
   // JAL always writes. Other R-types, I-types (LW, ADDI etc.) write based on exe_req_ctrl.reg_write_en.
-  io.exe_resp_write_en := io.valid_out && io.exe_req_ctrl.reg_write_en && 
-                           !(is_taken_branch && !io.exe_req_ctrl.is_jal) && // Don't write for non-JAL taken branches
-                           !(is_unconditional_jump && !io.exe_req_ctrl.is_jal) // Don't write for J, JR
-                           // JAL's exe_req_ctrl.reg_write_en is true, so it will write.
+  io.exe_resp_write_en := io.valid_out && io.exe_req_ctrl.reg_write_en &&
+    !(is_taken_branch && !io.exe_req_ctrl.is_jal) && // Don't write for non-JAL taken branches
+    !(is_unconditional_jump && !io.exe_req_ctrl.is_jal) // Don't write for J, JR
+  // JAL's exe_req_ctrl.reg_write_en is true, so it will write.
 
   // Redirect Logic
   io.redirect_valid_out := io.valid_in && !io.stall_in && (is_taken_branch || is_unconditional_jump)
-  io.redirect_target_out := Mux(is_taken_branch,
-                                mips_branch_target,
-                                actual_jump_target) // For J, JAL, JR
+  io.redirect_target_out := Mux(
+    is_taken_branch,
+    mips_branch_target,
+    actual_jump_target
+  ) // For J, JAL, JR
 
   // Stall propagation (simplified)
   // stall_out would signal back to previous stages if EXEU is stalled (e.g. by memory)
-} 
+}

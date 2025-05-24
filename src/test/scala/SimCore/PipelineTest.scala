@@ -103,7 +103,7 @@ class PipelineTest extends AnyFlatSpec with ChiselSim {
       dut.io.dbus_resp_valid.poke(true.B)
 
       // Cycle 1: Fetch first instruction
-      dut.io.ibus_req_valid.expect(true.B)
+      dut.io.ibus_req_ready.expect(true.B)
       dut.io.ibus_resp_data.poke(instructions(0).U) // LW instruction
       dut.clock.step(1)
 
@@ -151,7 +151,7 @@ class PipelineTest extends AnyFlatSpec with ChiselSim {
       dut.io.dbus_resp_valid.poke(true.B)
 
       // Cycle 1: Fetch first instruction
-      dut.io.ibus_req_valid.expect(true.B)
+      dut.io.ibus_req_ready.expect(true.B)
       dut.io.ibus_resp_data.poke(instructions(0).U)
       dut.clock.step(1)
 

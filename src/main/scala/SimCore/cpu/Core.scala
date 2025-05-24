@@ -23,13 +23,13 @@ import SimCore.cpu.pipeline.MEMWBData
 class Core extends Module {
   val io = IO(new Bundle {
     // Placeholder for IBus (Instruction Memory Interface)
-    val ibus_req_valid = Output(Bool())
+    val ibus_req_ready = Output(Bool())
     val ibus_req_addr = Output(UInt(32.W))
     val ibus_resp_valid = Input(Bool())
     val ibus_resp_data = Input(UInt(32.W))
 
     // Placeholder for DBus (Data Memory Interface)
-    val dbus_req_valid = Output(Bool())
+    val dbus_req_ready = Output(Bool())
     val dbus_req_addr = Output(UInt(32.W))
     val dbus_req_wdata = Output(UInt(32.W))
     val dbus_req_wen = Output(Bool())
@@ -62,7 +62,7 @@ class Core extends Module {
   // --- Stall & Flush Logic ---
   // Stall signal: For now, primarily from DMem access in EXEU.stall_in
   // A DMem access stalls if EXEU issues a dbus_req and dbus_resp is not yet valid.
-  val dmem_stall_condition = exeu.io.dbus_req_valid && !io.dbus_resp_valid
+  val dmem_stall_condition = exeu.io.dbus_req_ready && !io.dbus_resp_valid
   exeu.io.stall_in := dmem_stall_condition // EXEU internal stall for multi-cycle ops (like MemUnit)
 
   // Hazard Detection Unit Connections
@@ -99,7 +99,7 @@ class Core extends Module {
   // --- Pipeline Connections ---
 
   // IFU <-> IBus (Top Level IO)
-  io.ibus_req_valid <> ifu.io.ibus.req_valid
+  io.ibus_req_ready <> ifu.io.ibus.req_ready
   io.ibus_req_addr <> ifu.io.ibus.req_addr
   io.ibus_resp_valid <> ifu.io.ibus.resp_valid
   io.ibus_resp_data <> ifu.io.ibus.resp_data
@@ -181,7 +181,7 @@ class Core extends Module {
 
   // EX/MEM Register -> MEM Stage (which is mainly connecting to DBus for this design)
   // Data Memory Access (driven by EX/MEM register outputs)
-  io.dbus_req_valid := exmem_reg.io.valid_out && (exmem_reg.io.out.is_load_mem || exmem_reg.io.out.is_store_mem)
+  io.dbus_req_ready := exmem_reg.io.valid_out && (exmem_reg.io.out.is_load_mem || exmem_reg.io.out.is_store_mem)
   io.dbus_req_addr := exmem_reg.io.out.mem_addr
   io.dbus_req_wdata := exmem_reg.io.out.mem_wdata
   io.dbus_req_wen := exmem_reg.io.out.is_store_mem
