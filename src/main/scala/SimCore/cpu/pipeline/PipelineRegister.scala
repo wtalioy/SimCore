@@ -5,49 +5,32 @@ import chisel3.util._
 
 /**
  * Generic Pipeline Register.
- * @param gen The type of Data Bundle to register.
- * @param initVal Optional initial value for the register (e.g., for flushing to NOP-like state).
+ * Creates a register that holds data between pipeline stages with stall and flush control.
+ *
+ * @param T The Bundle type for data passing between stages
+ * @param gen A generator for the Bundle type
  */
-class PipelineRegister[T <: Data](gen: T, initVal: Option[T] = None) extends Module {
+class PipelineRegister[T <: Data](gen: T, resetValue: Option[T] = None) extends Module {
   val io = IO(new Bundle {
+    // Data interface
     val in = Input(gen.cloneType)
     val out = Output(gen.cloneType)
 
-    val stall = Input(Bool()) // If true, register holds its value
-    val flush = Input(Bool()) // If true, register resets to initVal (or zero if no initVal)
-    val valid_in = Input(Bool()) // Valid signal for the input data
-    val valid_out = Output(Bool()) // Registered valid signal
+    // Control interface
+    val stall = Input(Bool())  // When true, register holds current value
+    val flush = Input(Bool())  // When true, register resets to zero
   })
 
-  // The main data register
-  val data_reg = Reg(gen.cloneType)
-  // The valid signal register
-  val valid_reg = RegInit(false.B)
-
-  when(io.flush) {
-    // On flush, reset to initial value or zeros, and invalidate
-    data_reg := initVal.getOrElse(0.U.asTypeOf(gen))
-    valid_reg := false.B
-  }.elsewhen(!io.stall) {
-    // If not stalled and not flushed, pass input to output register
-    data_reg := io.in
-    valid_reg := io.valid_in
-  }.otherwise {
-    // Stalled: keep current value (do nothing to data_reg)
-    // valid_reg also holds its value unless specifically cleared by flush
+  // Main data register - initialize with zeros
+  val dataReg = RegInit(0.U.asTypeOf(gen.cloneType))
+  
+  // Update logic with priority: flush > stall > normal operation
+  when (io.flush) {
+    dataReg := 0.U.asTypeOf(gen.cloneType)
+  }.elsewhen (!io.stall) {
+    dataReg := io.in
   }
-
-  io.out := data_reg
-  io.valid_out := valid_reg && !io.flush // Ensure flush overrides valid
-
-  // Alternative simpler register if no initVal and flush implies just invalidation
-  // val data_reg = RegEnable(io.in, !io.stall)
-  // val valid_reg = RegInit(false.B)
-  // when (io.flush) {
-  //   valid_reg := false.B
-  // } .elsewhen(!io.stall) {
-  //  valid_reg := io.valid_in
-  // }
-  // io.out := data_reg
-  // io.valid_out := valid_reg
+  
+  // Connect register to output
+  io.out := dataReg
 } 

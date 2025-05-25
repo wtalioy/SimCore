@@ -24,14 +24,16 @@ object ALUOps {
   val COPY_A = 10.U(4.W)
   val COPY_B = 11.U(4.W)
   val NOR    = 12.U(4.W)
+  val LUI    = 13.U(4.W)
 }
 
 object BranchTypes {
-  val BEQ  = 0.U(3.W)
-  val BNE  = 1.U(3.W)
-  val BLT  = 2.U(3.W) // Was 4.U, re-numbering for compactness
-  val BGE  = 3.U(3.W) // Was 5.U
-  val BLTU = 4.U(3.W) // Was 6.U
-  val BGEU = 5.U(3.W) // Was 7.U
+  val NONE = 0.U(3.W)
+  val BEQ  = 1.U(3.W)
+  val BNE  = 2.U(3.W)
+  val BLT  = 3.U(3.W)
+  val BGE  = 4.U(3.W)
+  val BLTU = 5.U(3.W)
+  val BGEU = 6.U(3.W)
   // JAL and JALR removed as they are handled by jump logic
 }

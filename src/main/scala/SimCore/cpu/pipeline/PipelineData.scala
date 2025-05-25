@@ -3,7 +3,7 @@ package SimCore.cpu.pipeline
 import chisel3._
 import SimCore.cpu.utils.ALUOps      // Import for NOP definition
 import SimCore.cpu.utils.BranchTypes // Import for NOP definition
-import SimCore.cpu.utils.IDUControlOutputs // Import for IDEXData field and NOP
+import SimCore.cpu.utils.ControlBundle // Import for IDEXData field and NOP
 
 // Data Bundle for IF/ID Pipeline Register
 class IFIDData extends Bundle {
@@ -30,13 +30,12 @@ class IDEXData extends Bundle {
   val rs2_data = UInt(32.W)
 
   // Decoded signals from IDU (now bundled)
-  val rd_addr           = UInt(5.W) // Still needed for writeback path clarity before EXEU
-  val imm               = UInt(32.W) // Still needed as ALU operand
-  val ctrl              = new IDUControlOutputs() // Bundled control signals
+  val rd_addr = UInt(5.W) // Still needed for writeback path clarity before EXEU
+  val imm = UInt(32.W) // Still needed as ALU operand
+  val ctrl = new ControlBundle() // Bundled control signals
 
-  // Keep reads_rs and reads_rt for HDU if they are not part of IDUControlOutputs
-  // (Checking IDUControlOutputs: they are there, so can be removed from here if EXEU gets ctrl)
-  // For now, let's assume HDU still sources them from IDU outputs directly, not from IDEX reg.
+  // Keep reads_rs and reads_rt for HDU if they are not part of ControlBundle
+  // For now, let's assume HDU sources them from IDU outputs directly, not from IDEX reg.
   // So, removing from here as they would be redundant if ctrl is passed.
   // If needed directly by HDU from IDEX, they could be added back or sourced from ctrl.
 
@@ -50,7 +49,7 @@ object IDEXData {
     bundle.rs2_data := 0.U
     bundle.rd_addr := 0.U
     bundle.imm := 0.U
-    bundle.ctrl := IDUControlOutputs.NOP // Initialize the bundle to NOP
+    bundle.ctrl := ControlBundle.NOP // Initialize the bundle to NOP
     bundle
   }
 }

@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import SimCore.cpu.Core
-import SimCore.cpu.components.ForwardingSelect
+import SimCore.cpu.utils.ForwardingSelects
 
 class MockMemory(
     val instructions: Seq[BigInt],
@@ -79,6 +79,13 @@ class PipelineTest extends AnyFlatSpec with ChiselSim {
     BigInt((op << 26) | addr)
   }
 
+  // Safely convert BigInt to UInt, handling any potential negative values
+  def safeToUInt(value: BigInt): UInt = {
+    // Ensure the value is positive by taking the low 32 bits
+    val positiveValue = value & BigInt("FFFFFFFF", 16)
+    positiveValue.U(32.W)
+  }
+
   // Test for load-use data hazard (RAW dependency)
   it should "correctly handle load-use hazard by stalling" in {
     simulate(new Core) { dut =>
@@ -99,31 +106,31 @@ class PipelineTest extends AnyFlatSpec with ChiselSim {
         ) // Store value 42 at address 4
 
       // Initial values for registers: r1 = 4 (address for load)
-      dut.io.ibus_resp_valid.poke(true.B)
-      dut.io.dbus_resp_valid.poke(true.B)
+      dut.io.ibus.resp_valid.poke(true.B)
+      dut.io.dbus.resp_valid.poke(true.B)
 
       // Cycle 1: Fetch first instruction
-      dut.io.ibus_req_ready.expect(true.B)
-      dut.io.ibus_resp_data.poke(instructions(0).U) // LW instruction
+      dut.io.ibus.req_ready.expect(true.B)
+      dut.io.ibus.resp_data.poke(safeToUInt(instructions(0))) // LW instruction
       dut.clock.step(1)
 
       // Cycle 2: Fetch second instruction
-      dut.io.ibus_resp_data.poke(
-        instructions(1).U
+      dut.io.ibus.resp_data.poke(
+        safeToUInt(instructions(1))
       ) // ADD instruction (with hazard)
       // This tests that the HDU detects the load-use hazard
       dut.clock.step(1)
 
       // Cycle 3: Pipeline should detect the hazard and stall ID/IF
       // We expect a bubble to be inserted
-      dut.io.ibus_resp_data.poke(
-        instructions(2).U
+      dut.io.ibus.resp_data.poke(
+        safeToUInt(instructions(2))
       ) // ADD instruction (no hazard)
       dut.clock.step(1)
 
       // Run for a few more cycles to ensure the pipeline recovers
       for (i <- 0 until 5) {
-        dut.io.ibus_resp_data.poke(0.U) // NOP
+        dut.io.ibus.resp_data.poke(0.U) // NOP
         dut.clock.step(1)
       }
     }
@@ -147,23 +154,23 @@ class PipelineTest extends AnyFlatSpec with ChiselSim {
       val memory = new MockMemory(instructions)
 
       // Drive instruction memory responses
-      dut.io.ibus_resp_valid.poke(true.B)
-      dut.io.dbus_resp_valid.poke(true.B)
+      dut.io.ibus.resp_valid.poke(true.B)
+      dut.io.dbus.resp_valid.poke(true.B)
 
       // Cycle 1: Fetch first instruction
-      dut.io.ibus_req_ready.expect(true.B)
-      dut.io.ibus_resp_data.poke(instructions(0).U)
+      dut.io.ibus.req_ready.expect(true.B)
+      dut.io.ibus.resp_data.poke(safeToUInt(instructions(0)))
       dut.clock.step(1)
 
       // Cycle 2-8: Run the rest of the instructions
       for (i <- 1 until instructions.length) {
-        dut.io.ibus_resp_data.poke(instructions(i).U)
+        dut.io.ibus.resp_data.poke(safeToUInt(instructions(i)))
         dut.clock.step(1)
       }
 
       // Run for a few more cycles to ensure all instructions complete
       for (i <- 0 until 5) {
-        dut.io.ibus_resp_data.poke(0.U) // NOP
+        dut.io.ibus.resp_data.poke(0.U) // NOP
         dut.clock.step(1)
       }
     }
@@ -185,18 +192,18 @@ class PipelineTest extends AnyFlatSpec with ChiselSim {
       val memory = new MockMemory(instructions)
 
       // Drive instruction memory responses
-      dut.io.ibus_resp_valid.poke(true.B)
-      dut.io.dbus_resp_valid.poke(true.B)
+      dut.io.ibus.resp_valid.poke(true.B)
+      dut.io.dbus.resp_valid.poke(true.B)
 
       // Run each instruction
       for (i <- 0 until instructions.length) {
-        dut.io.ibus_resp_data.poke(instructions(i).U)
+        dut.io.ibus.resp_data.poke(safeToUInt(instructions(i)))
         dut.clock.step(1)
       }
 
       // Run for a few more cycles to flush the pipeline
       for (i <- 0 until 5) {
-        dut.io.ibus_resp_data.poke(0.U) // NOP
+        dut.io.ibus.resp_data.poke(0.U) // NOP
         dut.clock.step(1)
       }
     }
