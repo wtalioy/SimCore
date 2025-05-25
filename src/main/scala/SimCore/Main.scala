@@ -2,7 +2,7 @@ package SimCore
 
 import chisel3._
 import chisel3.util._
-import _root_.circt.stage._
+import _root_.circt.stage.ChiselStage
 
 import SimCore.cpu.Core
 import SimCore.cpu.GlobalConfig
@@ -18,20 +18,22 @@ object Main extends App {
   
   def exportVerilog(core: () => chisel3.RawModule): Unit = {
     println("Export Verilog Started")
-    val chiselStageOption = Seq(
-      chisel3.stage.ChiselGeneratorAnnotation(() => core()),
-      CIRCTTargetAnnotation(CIRCTTarget.Verilog)
+    
+    // Use ChiselStage.emitSystemVerilog which is available in Chisel 7.0.0-RC1
+    val chiselArgs = Array("--target-dir", build_dir)
+    val firtoolOpts = Array(
+      "--lowering-options=disallowLocalVariables,locationInfoStyle=wrapInAtSquareBracket",
+      "--split-verilog",
+      "--disable-all-randomization",
+      "--preserve-aggregate=none"
     )
-    val firtoolOptions = Seq(
-      FirtoolOption("--lowering-options=disallowLocalVariables,locationInfoStyle=wrapInAtSquareBracket"),
-      FirtoolOption("--split-verilog"),
-      FirtoolOption("-o=" + build_dir),
-      FirtoolOption("--disable-all-randomization"),
-      FirtoolOption("--preserve-aggregate=none"),
+    
+    // Use the object method instead of the instance method
+    ChiselStage.emitSystemVerilogFile(
+      core(),
+      chiselArgs,
+      firtoolOpts
     )
-    val executeOptions = chiselStageOption ++ firtoolOptions
-    val executeArgs = Array("-td", build_dir)
-    (new ChiselStage).execute(executeArgs, executeOptions)
   }
   
   // Handle different build targets
