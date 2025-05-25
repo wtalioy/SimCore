@@ -9,13 +9,13 @@ import SimCore.cpu.utils.ForwardingSelects
  * Handles data forwarding from later pipeline stages to earlier ones
  * to resolve data hazards
  */
-class ForwardingUnit extends Module {
+class ForwardingUnit(addrBits: Int) extends Module {
   val io = IO(new Bundle {
     // Register addresses
-    val rs1_addr = Input(UInt(5.W))
-    val rs2_addr = Input(UInt(5.W))
-    val ex_mem_rd_addr = Input(UInt(5.W))
-    val mem_wb_rd_addr = Input(UInt(5.W))
+    val rs1_addr = Input(UInt(addrBits.W))
+    val rs2_addr = Input(UInt(addrBits.W))
+    val ex_mem_rd_addr = Input(UInt(addrBits.W))
+    val mem_wb_rd_addr = Input(UInt(addrBits.W))
     
     // Register usage flags
     val uses_rs1 = Input(Bool())

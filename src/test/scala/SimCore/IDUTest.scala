@@ -2,8 +2,7 @@ package SimCore
 
 import chisel3._
 import chisel3.util._
-// import chiseltest._ // Removed
-import chisel3.simulator.scalatest.ChiselSim // Added
+import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import SimCore.cpu.stages.ID
 import SimCore.cpu.utils.ALUOps

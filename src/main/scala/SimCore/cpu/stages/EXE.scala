@@ -7,38 +7,39 @@ import SimCore.cpu.components.BrUnit
 import SimCore.cpu.utils.ALUOps
 import SimCore.cpu.utils.BranchTypes
 import SimCore.cpu.utils.ControlBundle
+import SimCore.cpu.Config
 
 /** Execution Unit Handles ALU operations, memory access, and branch/jump
   * decisions
   */
-class EXE extends Module {
+class EXE extends Module with Config {
   val io = IO(new Bundle {
     // Input from ID stage
     val in = new Bundle {
-      val pc = Input(UInt(32.W))
-      val rs1_data = Input(UInt(32.W))
-      val rs2_data = Input(UInt(32.W))
-      val rd_addr = Input(UInt(5.W))
-      val imm = Input(UInt(32.W))
+      val pc = Input(UInt(XLEN.W))
+      val rs1_data = Input(UInt(XLEN.W))
+      val rs2_data = Input(UInt(XLEN.W))
+      val rd_addr = Input(UInt(GPR_LEN.W))
+      val imm = Input(UInt(XLEN.W))
       val ctrl = Input(new ControlBundle())
       val valid = Input(Bool())
     }
 
     // Output to MEM stage
     val out = new Bundle {
-      val result = Output(UInt(32.W))
-      val rd_addr = Output(UInt(5.W))
+      val result = Output(UInt(XLEN.W))
+      val rd_addr = Output(UInt(GPR_LEN.W))
       val valid = Output(Bool())
     }
 
     // Branch control signals for fetch redirect
     val branch_taken = Output(Bool())
-    val branch_target = Output(UInt(32.W))
+    val branch_target = Output(UInt(XLEN.W))
   })
 
   // Functional units
-  val aluUnit = Module(new ALUUnit())
-  val brUnit = Module(new BrUnit())
+  val aluUnit = Module(new ALUUnit(XLEN))
+  val brUnit = Module(new BrUnit(XLEN))
 
   // ==========================================================================
   // ALU Logic

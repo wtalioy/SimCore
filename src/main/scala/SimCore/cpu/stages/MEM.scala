@@ -5,28 +5,29 @@ import chisel3.util._
 import SimCore.cpu.utils.DBusIO
 import SimCore.cpu.utils.EXMEM_Bundle
 import SimCore.cpu.utils.MEMWB_Bundle
+import SimCore.cpu.Config
 
 /** Memory Access Unit
   * Handles memory operations (load/store) and passes ALU results through
   * for register writeback.
   */
-class MEM extends Module {
+class MEM extends Module with Config {
   val io = IO(new Bundle {
     // Input from EX stage
-    val in = Input(new EXMEM_Bundle())
+    val in = Input(new EXMEM_Bundle(XLEN, GPR_LEN))
     
     // Output to WB stage
-    val out = Output(new MEMWB_Bundle())
+    val out = Output(new MEMWB_Bundle(XLEN, GPR_LEN))
     
     // Memory interface - using DBusIO directly, not Flipped
-    val dbus = new DBusIO()
+    val dbus = new DBusIO(XLEN)
     
     // Stall signal
     val stall_out = Output(Bool())
   })
   
   // Default output values
-  io.out := MEMWB_Bundle.NOP
+  io.out := MEMWB_Bundle.NOP(XLEN, GPR_LEN)
   io.stall_out := false.B
   
   // Default memory interface values

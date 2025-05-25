@@ -3,42 +3,28 @@ package SimCore.cpu
 import chisel3._
 import chisel3.util._
 
-// Import stage modules
-import SimCore.cpu.stages.IF
-import SimCore.cpu.stages.ID
-import SimCore.cpu.stages.EXE
-import SimCore.cpu.stages.MEM
-import SimCore.cpu.stages.WB
+import SimCore.cpu.Config
+import SimCore.cpu.stages._
 
-// Import component modules
 import SimCore.cpu.components.RegFile
 import SimCore.cpu.components.HazardDetectionUnit
 import SimCore.cpu.components.ForwardingUnit
 import SimCore.cpu.components.PipelineControlUnit
-import SimCore.cpu.utils.ForwardingSelects
+import SimCore.cpu.components.PipelineRegister
 
-// Import pipeline interfaces
-import SimCore.cpu.utils.IBusIO
-import SimCore.cpu.utils.DBusIO
-import SimCore.cpu.utils.IFID_Bundle
-import SimCore.cpu.utils.IDEX_Bundle
-import SimCore.cpu.utils.EXMEM_Bundle
-import SimCore.cpu.utils.MEMWB_Bundle
-
-// Import pipeline register module
-import SimCore.cpu.pipeline.PipelineRegister
+import SimCore.cpu.utils._
 
 /**
  * CPU Core
  * Five-stage pipeline implementation
  */
-class Core extends Module {
+class Core extends Module with Config {
   val io = IO(new Bundle {
     // Instruction memory interface
-    val ibus = new IBusIO()
+    val ibus = new IBusIO(XLEN)
     
     // Data memory interface
-    val dbus = new DBusIO()
+    val dbus = new DBusIO(XLEN)
   })
 
   //==========================================================================
@@ -50,23 +36,28 @@ class Core extends Module {
   val memu = Module(new MEM())
   val wbsu = Module(new WB())
   
-  // Standard 32-bit RISC-V regfile with 2 read ports and 1 write port
-  val regFile = Module(new RegFile(dataBits = 32, regCount = 32, readPorts = 2, writePorts = 1))
+  // Standard regfile with parameterized widths and ports
+  val regFile = Module(new RegFile(
+    dataBits = XLEN, 
+    regCount = GPR_NUM, 
+    readPorts = READ_PORT_NUM, 
+    writePorts = WRITE_PORT_NUM
+  ))
   
   //==========================================================================
   // Control Module Instantiation
   //==========================================================================
-  val hazardUnit = Module(new HazardDetectionUnit())
-  val forwardingUnit = Module(new ForwardingUnit())
+  val hazardUnit = Module(new HazardDetectionUnit(GPR_LEN))
+  val forwardingUnit = Module(new ForwardingUnit(GPR_LEN))
   val pipelineControl = Module(new PipelineControlUnit())
 
   //==========================================================================
   // Pipeline Register Instantiation
   //==========================================================================
-  val ifIdReg = Module(new PipelineRegister(new IFID_Bundle()))
-  val idExReg = Module(new PipelineRegister(new IDEX_Bundle()))
-  val exMemReg = Module(new PipelineRegister(new EXMEM_Bundle()))
-  val memWbReg = Module(new PipelineRegister(new MEMWB_Bundle()))
+  val ifIdReg = Module(new PipelineRegister(new IFID_Bundle(XLEN)))
+  val idExReg = Module(new PipelineRegister(new IDEX_Bundle(XLEN, GPR_LEN)))
+  val exMemReg = Module(new PipelineRegister(new EXMEM_Bundle(XLEN, GPR_LEN)))
+  val memWbReg = Module(new PipelineRegister(new MEMWB_Bundle(XLEN, GPR_LEN)))
 
   //==========================================================================
   // Pipeline Control Connections
@@ -121,11 +112,11 @@ class Core extends Module {
   regFile.io.raddr(1) := idu.io.rs2_addr
   
   // ID/EX register input
-  val idExInput = Wire(new IDEX_Bundle())
+  val idExInput = Wire(new IDEX_Bundle(XLEN, GPR_LEN))
   
   // Prepare ID/EX register input
   when (hazardUnit.io.load_use_stall || exeu.io.branch_taken) {
-    idExInput := IDEX_Bundle.NOP
+    idExInput := IDEX_Bundle.NOP(XLEN, GPR_LEN)
   }.otherwise {
     idExInput.pc := idu.io.pc
     idExInput.rs1_addr := idu.io.rs1_addr
@@ -171,7 +162,7 @@ class Core extends Module {
   exeu.io.in.valid := idExReg.io.out.valid
   
   // EX/MEM register input
-  val exMemInput = Wire(new EXMEM_Bundle())
+  val exMemInput = Wire(new EXMEM_Bundle(XLEN, GPR_LEN))
   exMemInput.pc := idExReg.io.out.pc
   exMemInput.alu_result := exeu.io.out.result
   exMemInput.rd_addr := exeu.io.out.rd_addr

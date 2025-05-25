@@ -7,19 +7,19 @@ import SimCore.cpu.utils.BranchTypes
 // Define Branch types if not globally defined (from IDU ideally)
 // object BranchTypes { ... } // Removed this definition
 
-class BrUnit extends Module {
+class BrUnit(dataBits: Int) extends Module {
   val io = IO(new Bundle {
     // val pc = Input(UInt(32.W)) // Current PC for target calculation
-    val rs1_data = Input(UInt(32.W))
-    val rs2_data = Input(UInt(32.W))
-    val imm = Input(UInt(32.W)) // Branch offset or JAL/JALR immediate
+    val rs1_data = Input(UInt(dataBits.W))
+    val rs2_data = Input(UInt(dataBits.W))
+    val imm = Input(UInt(dataBits.W)) // Branch offset or JAL/JALR immediate
     val is_branch = Input(Bool()) // Control signal from IDU/EXEU
     val is_jump = Input(Bool()) // Control signal for Jumps (JAL/JALR)
     val branch_type =
       Input(UInt(3.W)) // Specific branch condition (BEQ, BNE, etc.)
 
     val branch_taken = Output(Bool())
-    val branch_target = Output(UInt(32.W)) // Target address if branch is taken
+    val branch_target = Output(UInt(dataBits.W)) // Target address if branch is taken
   })
 
   // Default outputs

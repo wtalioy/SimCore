@@ -7,16 +7,16 @@ import SimCore.cpu.utils.ALUOps
 /** Arithmetic Logic Unit Performs the core arithmetic and logical operations
   * for the CPU
   */
-class ALUUnit extends Module {
+class ALUUnit(dataBits: Int) extends Module {
   val io = IO(new Bundle {
     val alu_op = Input(UInt(4.W))
-    val operand1 = Input(UInt(32.W))
-    val operand2 = Input(UInt(32.W))
-    val result = Output(UInt(32.W))
+    val operand1 = Input(UInt(dataBits.W))
+    val operand2 = Input(UInt(dataBits.W))
+    val result = Output(UInt(dataBits.W))
   })
 
   // Default value
-  val resultWire = Wire(UInt(32.W))
+  val resultWire = Wire(UInt(dataBits.W))
   resultWire := 0.U
 
   // ALU operation implementation

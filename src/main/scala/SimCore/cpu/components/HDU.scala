@@ -7,16 +7,16 @@ import chisel3.util._
  * Hazard Detection Unit
  * Detects load-use hazards and generates stall signals
  */
-class HazardDetectionUnit extends Module {
+class HazardDetectionUnit(addrBits: Int) extends Module {
   val io = IO(new Bundle {
     // ID stage register addresses and usage flags
-    val id_rs1_addr = Input(UInt(5.W))
-    val id_rs2_addr = Input(UInt(5.W))
+    val id_rs1_addr = Input(UInt(addrBits.W))
+    val id_rs2_addr = Input(UInt(addrBits.W))
     val id_uses_rs1 = Input(Bool())
     val id_uses_rs2 = Input(Bool())
     
     // EX stage information
-    val ex_rd_addr = Input(UInt(5.W))
+    val ex_rd_addr = Input(UInt(addrBits.W))
     val ex_is_load = Input(Bool())
     
     // Pipeline control output

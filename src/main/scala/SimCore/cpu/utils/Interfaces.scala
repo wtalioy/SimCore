@@ -2,69 +2,59 @@ package SimCore.cpu.utils
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.Config
-import SimCore.cpu.GlobalConfig
-
-/**
- * Interface bundles for SimCore CPU
- * All bundles parameterized using the Config trait
- */
-trait InterfaceConfig extends Config
 
 // Memory interfaces
-class IBusIO extends Bundle with InterfaceConfig {
+class IBusIO(dataBits: Int) extends Bundle {
   val req_ready = Output(Bool())
-  val req_addr = Output(UInt(XLEN.W))
+  val req_addr = Output(UInt(dataBits.W))
   val resp_valid = Input(Bool())
-  val resp_data = Input(UInt(XLEN.W))
+  val resp_data = Input(UInt(dataBits.W))
 }
 
-class DBusIO extends Bundle with InterfaceConfig {
+class DBusIO(dataBits: Int) extends Bundle {
   val req_ready = Output(Bool())
-  val req_addr = Output(UInt(XLEN.W))
-  val req_wdata = Output(UInt(XLEN.W))
+  val req_addr = Output(UInt(dataBits.W))
+  val req_wdata = Output(UInt(dataBits.W))
   val req_wen = Output(Bool())
   val resp_valid = Input(Bool())
-  val resp_rdata = Input(UInt(XLEN.W))
+  val resp_rdata = Input(UInt(dataBits.W))
 }
 
 // Pipeline stage interfaces - following a consistent pattern
 
 // IF to ID
-class IFID_Bundle extends Bundle with InterfaceConfig {
-  val pc = UInt(XLEN.W)
-  val instr = UInt(XLEN.W)
+class IFID_Bundle(dataBits: Int) extends Bundle {
+  val pc = UInt(dataBits.W)
+  val instr = UInt(dataBits.W)
   val valid = Bool()
 }
 
 object IFID_Bundle {
-  def apply(): IFID_Bundle = {
-    val bundle = Wire(new IFID_Bundle())
+  def NOP(dataBits: Int): IFID_Bundle = {
+    val bundle = Wire(new IFID_Bundle(dataBits))
     bundle.pc := 0.U
     bundle.instr := 0.U
     bundle.valid := false.B
     bundle
   }
-  
-  def NOP = apply()
 }
 
 // ID to EX
-class IDEX_Bundle extends Bundle with InterfaceConfig {
-  val pc = UInt(XLEN.W)
-  val rs1_data = UInt(XLEN.W)
-  val rs2_data = UInt(XLEN.W)
-  val rs1_addr = UInt(GPR_LEN.W)
-  val rs2_addr = UInt(GPR_LEN.W)
-  val rd_addr = UInt(GPR_LEN.W)
-  val imm = UInt(XLEN.W)
+class IDEX_Bundle(dataBits: Int, addrBits: Int) extends Bundle {
+  val pc = UInt(dataBits.W)
+  val rs1_data = UInt(dataBits.W)
+  val rs2_data = UInt(dataBits.W)
+  val rs1_addr = UInt(addrBits.W)
+  val rs2_addr = UInt(addrBits.W)
+  val rd_addr = UInt(addrBits.W)
+  val imm = UInt(dataBits.W)
   val ctrl = new ControlBundle()
   val valid = Bool()
 }
 
 object IDEX_Bundle {
-  def apply(): IDEX_Bundle = {
-    val bundle = Wire(new IDEX_Bundle())
+  def NOP(dataBits: Int, addrBits: Int): IDEX_Bundle = {
+    val bundle = Wire(new IDEX_Bundle(dataBits, addrBits))
     bundle.pc := 0.U
     bundle.rs1_data := 0.U
     bundle.rs2_data := 0.U
@@ -72,64 +62,58 @@ object IDEX_Bundle {
     bundle.rs2_addr := 0.U
     bundle.rd_addr := 0.U
     bundle.imm := 0.U
-    bundle.ctrl := ControlBundle.NOP
+    bundle.ctrl := ControlBundle.NOP()
     bundle.valid := false.B
     bundle
   }
-  
-  def NOP = apply()
 }
 
 // EX to MEM
-class EXMEM_Bundle extends Bundle with InterfaceConfig {
-  val pc = UInt(XLEN.W)
-  val alu_result = UInt(XLEN.W)
-  val rd_addr = UInt(GPR_LEN.W)
-  val rs2_data = UInt(XLEN.W) // For store operations
+class EXMEM_Bundle(dataBits: Int, addrBits: Int) extends Bundle {
+  val pc = UInt(dataBits.W)
+  val alu_result = UInt(dataBits.W)
+  val rd_addr = UInt(addrBits.W)
+  val rs2_data = UInt(dataBits.W) // For store operations
   val ctrl = new MemWbCtrlBundle()
   val valid = Bool()
 }
 
 object EXMEM_Bundle {
-  def apply(): EXMEM_Bundle = {
-    val bundle = Wire(new EXMEM_Bundle())
+  def NOP(dataBits: Int, addrBits: Int): EXMEM_Bundle = {
+    val bundle = Wire(new EXMEM_Bundle(dataBits, addrBits))
     bundle.pc := 0.U
     bundle.alu_result := 0.U
     bundle.rd_addr := 0.U
     bundle.rs2_data := 0.U
-    bundle.ctrl := MemWbCtrlBundle.NOP
+    bundle.ctrl := MemWbCtrlBundle.NOP()
     bundle.valid := false.B
     bundle
   }
-  
-  def NOP = apply()
 }
 
 // MEM to WB
-class MEMWB_Bundle extends Bundle with InterfaceConfig {
-  val pc = UInt(XLEN.W)
-  val result = UInt(XLEN.W) // From ALU or memory
-  val rd_addr = UInt(GPR_LEN.W)
+class MEMWB_Bundle(dataBits: Int, addrBits: Int) extends Bundle {
+  val pc = UInt(dataBits.W)
+  val result = UInt(dataBits.W) // From ALU or memory
+  val rd_addr = UInt(addrBits.W)
   val ctrl = new WbCtrlBundle()
   val valid = Bool()
 }
 
 object MEMWB_Bundle {
-  def apply(): MEMWB_Bundle = {
-    val bundle = Wire(new MEMWB_Bundle())
+  def NOP(dataBits: Int, addrBits: Int): MEMWB_Bundle = {
+    val bundle = Wire(new MEMWB_Bundle(dataBits, addrBits))
     bundle.pc := 0.U
     bundle.result := 0.U
     bundle.rd_addr := 0.U
-    bundle.ctrl := WbCtrlBundle.NOP
+    bundle.ctrl := WbCtrlBundle.NOP()
     bundle.valid := false.B
     bundle
   }
-  
-  def NOP = apply()
 }
 
 // Control signal bundles - separated by pipeline stage
-class ControlBundle extends Bundle with InterfaceConfig {
+class ControlBundle extends Bundle {
   // ALU control
   val alu_op = UInt(4.W)
   val alu_src1_sel = UInt(2.W)
@@ -153,7 +137,7 @@ class ControlBundle extends Bundle with InterfaceConfig {
 }
 
 object ControlBundle {
-  def apply(): ControlBundle = {
+  def NOP(): ControlBundle = {
     val bundle = Wire(new ControlBundle())
     bundle.alu_op := 0.U
     bundle.alu_src1_sel := 0.U
@@ -168,12 +152,10 @@ object ControlBundle {
     bundle.uses_rs2 := false.B
     bundle
   }
-  
-  def NOP = apply()
 }
 
 // Memory/Writeback control signals
-class MemWbCtrlBundle extends Bundle with InterfaceConfig {
+class MemWbCtrlBundle extends Bundle {
   val mem_read = Bool()
   val mem_write = Bool()
   val mem_to_reg = Bool()
@@ -181,7 +163,7 @@ class MemWbCtrlBundle extends Bundle with InterfaceConfig {
 }
 
 object MemWbCtrlBundle {
-  def apply(): MemWbCtrlBundle = {
+  def NOP(): MemWbCtrlBundle = {
     val bundle = Wire(new MemWbCtrlBundle())
     bundle.mem_read := false.B
     bundle.mem_write := false.B
@@ -189,28 +171,17 @@ object MemWbCtrlBundle {
     bundle.reg_write := false.B
     bundle
   }
-  
-  def NOP = apply()
 }
 
 // Writeback control signals
-class WbCtrlBundle extends Bundle with InterfaceConfig {
+class WbCtrlBundle extends Bundle {
   val reg_write = Bool()
 }
 
 object WbCtrlBundle {
-  def apply(): WbCtrlBundle = {
+  def NOP(): WbCtrlBundle = {
     val bundle = Wire(new WbCtrlBundle())
     bundle.reg_write := false.B
     bundle
   }
-  
-  def NOP = apply()
 }
-
-// Forwarding Unit constants
-object ForwardingSelects {
-  val NO_FORWARD = 0.U(2.W)
-  val FORWARD_FROM_MEM = 1.U(2.W) 
-  val FORWARD_FROM_WB = 2.U(2.W)
-} 

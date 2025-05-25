@@ -8,10 +8,12 @@ import SimCore.cpu.components.BrUnit
 import SimCore.cpu.utils.BranchTypes
 
 class BrUnitTest extends AnyFlatSpec with ChiselSim {
+  val XLEN = 32
+
   behavior of "BrUnit"
 
   it should "correctly evaluate BEQ condition" in {
-    simulate(new BrUnit) { dut =>
+    simulate(new BrUnit(XLEN)) { dut =>
       // Equal values should take the branch
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(5.U)
@@ -31,7 +33,7 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
   }
 
   it should "correctly evaluate BNE condition" in {
-    simulate(new BrUnit) { dut =>
+    simulate(new BrUnit(XLEN)) { dut =>
       // Unequal values should take the branch
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(10.U)
@@ -51,7 +53,7 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
   }
 
   it should "correctly evaluate BLT condition" in {
-    simulate(new BrUnit) { dut =>
+    simulate(new BrUnit(XLEN)) { dut =>
       // rs1 < rs2 should take the branch (signed comparison)
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(10.U)
@@ -79,7 +81,7 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
   }
 
   it should "correctly evaluate BGE condition" in {
-    simulate(new BrUnit) { dut =>
+    simulate(new BrUnit(XLEN)) { dut =>
       // rs1 >= rs2 should take the branch (signed comparison)
       dut.io.rs1_data.poke(10.U)
       dut.io.rs2_data.poke(5.U)
@@ -107,7 +109,7 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
   }
 
   it should "not take branch when is_branch is false" in {
-    simulate(new BrUnit) { dut =>
+    simulate(new BrUnit(XLEN)) { dut =>
       // Even if the condition is true, branch should not be taken if is_branch is false
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(5.U)

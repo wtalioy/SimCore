@@ -37,3 +37,10 @@ object BranchTypes {
   val BGEU = 6.U(3.W)
   // JAL and JALR removed as they are handled by jump logic
 }
+
+// Forwarding Unit constants
+object ForwardingSelects {
+  val NO_FORWARD = 0.U(2.W)
+  val FORWARD_FROM_MEM = 1.U(2.W) 
+  val FORWARD_FROM_WB = 2.U(2.W)
+} 

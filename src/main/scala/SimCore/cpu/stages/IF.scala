@@ -14,7 +14,7 @@ import SimCore.cpu.GlobalConfig
 class IF extends Module with Config {
   val io = IO(new Bundle {
     // Memory interface - Note: this should be the actual IBusIO, not Flipped
-    val ibus = new IBusIO()
+    val ibus = new IBusIO(XLEN)
     
     // Control flow signals
     val redirect_valid = Input(Bool())
@@ -22,7 +22,7 @@ class IF extends Module with Config {
     val stall = Input(Bool())
     
     // Output to ID stage
-    val out = Output(new IFID_Bundle())
+    val out = Output(new IFID_Bundle(XLEN))
   })
 
   // Program Counter register
@@ -30,7 +30,7 @@ class IF extends Module with Config {
   
   // Output state registers - properly initialize with hardware values
   val outReg = RegInit({
-    val init = Wire(new IFID_Bundle())
+    val init = Wire(new IFID_Bundle(XLEN))
     init.pc := 0.U
     init.instr := 0.U
     init.valid := false.B

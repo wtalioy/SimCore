@@ -6,6 +6,7 @@ import SimCore.cpu.utils.ALUOps
 import SimCore.cpu.utils.BranchTypes
 import SimCore.cpu.utils.ControlBundle
 import SimCore.cpu.utils.IFID_Bundle
+import SimCore.cpu.Config
 
 // Define MIPS Opcodes and Funct codes (subset)
 object MIPSOpcodes {
@@ -50,17 +51,17 @@ object MIPSFuncts {
 
 /** Instruction Decode Unit Decodes instructions and generates control signals
   */
-class ID extends Module {
+class ID extends Module with Config {
   val io = IO(new Bundle {
     // Input from IF stage
-    val in = Input(new IFID_Bundle())
+    val in = Input(new IFID_Bundle(XLEN))
 
     // Output signals for ID stage
-    val pc = Output(UInt(32.W))
-    val rs1_addr = Output(UInt(5.W))
-    val rs2_addr = Output(UInt(5.W))
-    val rd_addr = Output(UInt(5.W))
-    val imm = Output(UInt(32.W))
+    val pc = Output(UInt(XLEN.W))
+    val rs1_addr = Output(UInt(GPR_LEN.W))
+    val rs2_addr = Output(UInt(GPR_LEN.W))
+    val rd_addr = Output(UInt(GPR_LEN.W))
+    val imm = Output(UInt(XLEN.W))
     val ctrl = Output(new ControlBundle())
     val valid = Output(Bool())
 
@@ -78,9 +79,9 @@ class ID extends Module {
   val shamt = instr(10, 6)
   val funct = instr(5, 0)
   val imm16 = instr(15, 0)
-  val imm16_signed = Wire(SInt(32.W))
+  val imm16_signed = Wire(SInt(XLEN.W))
   imm16_signed := imm16.asSInt // Sign-extended 16-bit immediate
-  val imm16_unsigned = Wire(UInt(32.W))
+  val imm16_unsigned = Wire(UInt(XLEN.W))
   imm16_unsigned := imm16 // Zero-extended for logical ops
   val jump_addr = instr(25, 0)
 
@@ -90,7 +91,7 @@ class ID extends Module {
   io.rs2_addr := 0.U
   io.rd_addr := 0.U
   io.imm := 0.U
-  io.ctrl := ControlBundle.NOP
+  io.ctrl := ControlBundle.NOP()
   io.valid := io.in.valid
   io.uses_rs1 := false.B
   io.uses_rs2 := false.B
