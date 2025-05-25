@@ -1,10 +1,10 @@
-package SimCore
+package simcore
 
 import chisel3._
 import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
-import SimCore.cpu.components.RegFile
+import simcore.cpu.components.RegFile
 
 /**
  * Comprehensive test for the RegFile component

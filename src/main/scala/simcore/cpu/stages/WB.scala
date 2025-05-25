@@ -1,9 +1,9 @@
-package SimCore.cpu.stages
+package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.utils.MEMWB_Bundle
-import SimCore.cpu.Config
+import simcore.cpu.utils.MEMWB_Bundle
+import simcore.cpu.Config
 
 /** WriteBack Stage Unit
   * Handles register writeback operations.

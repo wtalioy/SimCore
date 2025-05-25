@@ -1,8 +1,8 @@
-package SimCore.cpu.components
+package simcore.cpu.components
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.utils.ALUOps
+import simcore.cpu.utils.ALUOps
 
 /** Arithmetic Logic Unit Performs the core arithmetic and logical operations
   * for the CPU

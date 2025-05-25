@@ -1,9 +1,9 @@
-package SimCore.cpu.components
+package simcore.cpu.components
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.Config
-import SimCore.cpu.GlobalConfig
+import simcore.cpu.Config
+import simcore.cpu.GlobalConfig
 
 /** Unified Register File with configurable parameters
   *

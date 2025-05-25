@@ -1,11 +1,11 @@
-package SimCore.cpu.stages
+package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.utils.DBusIO
-import SimCore.cpu.utils.EXMEM_Bundle
-import SimCore.cpu.utils.MEMWB_Bundle
-import SimCore.cpu.Config
+import simcore.cpu.utils.DBusIO
+import simcore.cpu.utils.EXMEM_Bundle
+import simcore.cpu.utils.MEMWB_Bundle
+import simcore.cpu.Config
 
 /** Memory Access Unit
   * Handles memory operations (load/store) and passes ALU results through

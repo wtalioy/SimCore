@@ -1,18 +1,18 @@
-package SimCore.cpu
+package simcore.cpu
 
 import chisel3._
 import chisel3.util._
 
-import SimCore.cpu.Config
-import SimCore.cpu.stages._
+import simcore.cpu.Config
+import simcore.cpu.stages._
 
-import SimCore.cpu.components.RegFile
-import SimCore.cpu.components.HazardDetectionUnit
-import SimCore.cpu.components.ForwardingUnit
-import SimCore.cpu.components.PipelineControlUnit
-import SimCore.cpu.components.PipelineRegister
+import simcore.cpu.components.RegFile
+import simcore.cpu.components.HazardDetectionUnit
+import simcore.cpu.components.ForwardingUnit
+import simcore.cpu.components.PipelineControlUnit
+import simcore.cpu.components.PipelineRegister
 
-import SimCore.cpu.utils._
+import simcore.cpu.utils._
 
 /**
  * CPU Core

@@ -1,8 +1,8 @@
-package SimCore.cpu.components
+package simcore.cpu.components
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.utils.BranchTypes
+import simcore.cpu.utils.BranchTypes
 
 // Define Branch types if not globally defined (from IDU ideally)
 // object BranchTypes { ... } // Removed this definition

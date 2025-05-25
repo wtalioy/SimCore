@@ -1,11 +1,11 @@
-package SimCore
+package simcore
 
 import chisel3._
 import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
-import SimCore.cpu.components.BrUnit
-import SimCore.cpu.utils.BranchTypes
+import simcore.cpu.components.BrUnit
+import simcore.cpu.utils.BranchTypes
 
 class BrUnitTest extends AnyFlatSpec with ChiselSim {
   val XLEN = 32

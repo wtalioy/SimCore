@@ -1,11 +1,11 @@
-package SimCore
+package simcore
 
 import chisel3._
 import chisel3.util._
 import _root_.circt.stage.ChiselStage
 
-import SimCore.cpu.Core
-import SimCore.cpu.GlobalConfig
+import simcore.cpu.Core
+import simcore.cpu.GlobalConfig
 
 /**
  * Main entry point for SimCore

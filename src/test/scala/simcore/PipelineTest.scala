@@ -1,11 +1,11 @@
-package SimCore
+package simcore
 
 import chisel3._
 import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
-import SimCore.cpu.Core
-import SimCore.cpu.utils.ForwardingSelects
+import simcore.cpu.Core
+import simcore.cpu.utils.ForwardingSelects
 
 class MockMemory(
     val instructions: Seq[BigInt],

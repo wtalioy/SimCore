@@ -1,8 +1,8 @@
-package SimCore.cpu.components
+package simcore.cpu.components
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.utils.ForwardingSelects
+import simcore.cpu.utils.ForwardingSelects
 
 /**
  * Forwarding Unit

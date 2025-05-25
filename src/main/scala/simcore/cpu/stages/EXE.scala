@@ -1,13 +1,13 @@
-package SimCore.cpu.stages
+package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.components.ALUUnit
-import SimCore.cpu.components.BrUnit
-import SimCore.cpu.utils.ALUOps
-import SimCore.cpu.utils.BranchTypes
-import SimCore.cpu.utils.ControlBundle
-import SimCore.cpu.Config
+import simcore.cpu.components.ALUUnit
+import simcore.cpu.components.BrUnit
+import simcore.cpu.utils.ALUOps
+import simcore.cpu.utils.BranchTypes
+import simcore.cpu.utils.ControlBundle
+import simcore.cpu.Config
 
 /** Execution Unit Handles ALU operations, memory access, and branch/jump
   * decisions

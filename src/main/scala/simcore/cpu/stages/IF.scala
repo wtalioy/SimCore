@@ -1,11 +1,11 @@
-package SimCore.cpu.stages
+package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.utils.IBusIO
-import SimCore.cpu.utils.IFID_Bundle
-import SimCore.cpu.Config
-import SimCore.cpu.GlobalConfig
+import simcore.cpu.utils.IBusIO
+import simcore.cpu.utils.IFID_Bundle
+import simcore.cpu.Config
+import simcore.cpu.GlobalConfig
 
 /**
  * Instruction Fetch Unit

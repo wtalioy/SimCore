@@ -1,4 +1,4 @@
-package SimCore.cpu.utils
+package simcore.cpu.utils
 
 import chisel3._
 import chisel3.util._

@@ -1,12 +1,12 @@
-package SimCore.cpu.stages
+package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import SimCore.cpu.utils.ALUOps
-import SimCore.cpu.utils.BranchTypes
-import SimCore.cpu.utils.ControlBundle
-import SimCore.cpu.utils.IFID_Bundle
-import SimCore.cpu.Config
+import simcore.cpu.utils.ALUOps
+import simcore.cpu.utils.BranchTypes
+import simcore.cpu.utils.ControlBundle
+import simcore.cpu.utils.IFID_Bundle
+import simcore.cpu.Config
 
 // Define MIPS Opcodes and Funct codes (subset)
 object MIPSOpcodes {
