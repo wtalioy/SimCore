@@ -125,4 +125,90 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
       dut.io.branch_taken.expect(false.B)
     }
   }
+
+  it should "correctly evaluate single-operand branch conditions" in {
+    simulate(new BrUnit(XLEN)) { dut =>
+      dut.io.pc.poke(0x1000.U)
+      dut.io.imm.poke(16.U)
+      dut.io.is_branch.poke(true.B)
+      dut.io.is_jump.poke(false.B)
+      dut.io.is_jalr.poke(false.B)
+      
+      // Test BGEZ (Branch if Greater than or Equal to Zero)
+      // Case 1: rs1 > 0
+      dut.io.rs1_data.poke(5.U)
+      dut.io.branch_type.poke(BranchTypes.BGEZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(true.B)
+      
+      // Case 2: rs1 = 0
+      dut.io.rs1_data.poke(0.U)
+      dut.io.branch_type.poke(BranchTypes.BGEZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(true.B)
+      
+      // Case 3: rs1 < 0
+      dut.io.rs1_data.poke("hFFFFFFFF".U) // -1 in two's complement
+      dut.io.branch_type.poke(BranchTypes.BGEZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(false.B)
+      
+      // Test BGTZ (Branch if Greater Than Zero)
+      // Case 1: rs1 > 0
+      dut.io.rs1_data.poke(5.U)
+      dut.io.branch_type.poke(BranchTypes.BGTZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(true.B)
+      
+      // Case 2: rs1 = 0
+      dut.io.rs1_data.poke(0.U)
+      dut.io.branch_type.poke(BranchTypes.BGTZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(false.B)
+      
+      // Case 3: rs1 < 0
+      dut.io.rs1_data.poke("hFFFFFFFF".U) // -1 in two's complement
+      dut.io.branch_type.poke(BranchTypes.BGTZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(false.B)
+      
+      // Test BLEZ (Branch if Less than or Equal to Zero)
+      // Case 1: rs1 > 0
+      dut.io.rs1_data.poke(5.U)
+      dut.io.branch_type.poke(BranchTypes.BLEZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(false.B)
+      
+      // Case 2: rs1 = 0
+      dut.io.rs1_data.poke(0.U)
+      dut.io.branch_type.poke(BranchTypes.BLEZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(true.B)
+      
+      // Case 3: rs1 < 0
+      dut.io.rs1_data.poke("hFFFFFFFF".U) // -1 in two's complement
+      dut.io.branch_type.poke(BranchTypes.BLEZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(true.B)
+      
+      // Test BLTZ (Branch if Less Than Zero)
+      // Case 1: rs1 > 0
+      dut.io.rs1_data.poke(5.U)
+      dut.io.branch_type.poke(BranchTypes.BLTZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(false.B)
+      
+      // Case 2: rs1 = 0
+      dut.io.rs1_data.poke(0.U)
+      dut.io.branch_type.poke(BranchTypes.BLTZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(false.B)
+      
+      // Case 3: rs1 < 0
+      dut.io.rs1_data.poke("hFFFFFFFF".U) // -1 in two's complement
+      dut.io.branch_type.poke(BranchTypes.BLTZ)
+      dut.clock.step(1)
+      dut.io.branch_taken.expect(true.B)
+    }
+  }
 }

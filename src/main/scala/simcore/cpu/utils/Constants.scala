@@ -35,6 +35,11 @@ object BranchTypes {
   val BGE  = 4.U(3.W)
   val BLTU = 5.U(3.W)
   val BGEU = 6.U(3.W)
+  // Single-operand branches (comparison with zero)
+  val BGEZ = 7.U(4.W)  // Branch if rs >= 0
+  val BGTZ = 8.U(4.W)  // Branch if rs > 0
+  val BLEZ = 9.U(4.W)  // Branch if rs <= 0
+  val BLTZ = 10.U(4.W) // Branch if rs < 0
   // JAL and JALR removed as they are handled by jump logic
 }
 

@@ -120,7 +120,7 @@ class ControlBundle extends Bundle {
   val alu_src2_sel = UInt(2.W)
   
   // Branch/Jump control
-  val branch_type = UInt(3.W)
+  val branch_type = UInt(4.W)
   val jump = Bool()
   
   // Memory control
