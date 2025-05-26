@@ -67,22 +67,34 @@ class Core extends Module with Config {
   hazardUnit.io.id_rs2_addr := idu.io.rs2_addr
   hazardUnit.io.id_uses_rs1 := idu.io.uses_rs1
   hazardUnit.io.id_uses_rs2 := idu.io.uses_rs2
+  hazardUnit.io.id_is_branch := idu.io.ctrl.branch_type =/= 0.U
+  hazardUnit.io.id_is_store := idu.io.ctrl.mem_write
+  hazardUnit.io.id_is_load := idu.io.ctrl.mem_read
   hazardUnit.io.ex_rd_addr := idExReg.io.out.rd_addr
   hazardUnit.io.ex_is_load := idExReg.io.out.ctrl.mem_read
+  hazardUnit.io.ex_is_mul_div := false.B // Future: add mul/div detection
+  hazardUnit.io.mem_is_load := exMemReg.io.out.ctrl.mem_read
+  hazardUnit.io.mem_rd_addr := exMemReg.io.out.rd_addr
+  hazardUnit.io.alu_busy := false.B // Future: add multi-cycle ALU operations
+  hazardUnit.io.mem_busy := memu.io.stall_out
   
   // Connect forwarding unit
   forwardingUnit.io.rs1_addr := idExReg.io.out.rs1_addr
   forwardingUnit.io.rs2_addr := idExReg.io.out.rs2_addr
-  forwardingUnit.io.uses_rs1 := idExReg.io.out.ctrl.uses_rs1
-  forwardingUnit.io.uses_rs2 := idExReg.io.out.ctrl.uses_rs2
+  forwardingUnit.io.ex_rd_addr := idExReg.io.out.rd_addr
   forwardingUnit.io.ex_mem_rd_addr := exMemReg.io.out.rd_addr
   forwardingUnit.io.mem_wb_rd_addr := memWbReg.io.out.rd_addr
+  forwardingUnit.io.uses_rs1 := idExReg.io.out.ctrl.uses_rs1
+  forwardingUnit.io.uses_rs2 := idExReg.io.out.ctrl.uses_rs2
+  forwardingUnit.io.is_branch := idExReg.io.out.ctrl.branch_type =/= 0.U
+  forwardingUnit.io.ex_reg_write := idExReg.io.out.ctrl.reg_write
   forwardingUnit.io.ex_mem_reg_write := exMemReg.io.out.ctrl.reg_write
   forwardingUnit.io.mem_wb_reg_write := memWbReg.io.out.ctrl.reg_write
+  forwardingUnit.io.ex_valid := idExReg.io.out.valid
   
   // Connect pipeline control unit
   pipelineControl.io.mem_stall := memu.io.stall_out
-  pipelineControl.io.load_use_stall := hazardUnit.io.load_use_stall
+  pipelineControl.io.load_use_stall := hazardUnit.io.pipeline_stall // Use combined stall signal
   pipelineControl.io.branch_taken := exeu.io.branch_taken
 
   //==========================================================================
@@ -140,6 +152,7 @@ class Core extends Module with Config {
   // Apply forwarding to register data
   val forwardedRs1Data = MuxLookup(forwardingUnit.io.forward_rs1_sel, idExReg.io.out.rs1_data)(
     Seq(
+      ForwardingSelects.FORWARD_FROM_EX -> exeu.io.out.result,      // Intra-EX forwarding
       ForwardingSelects.FORWARD_FROM_MEM -> exMemReg.io.out.alu_result,
       ForwardingSelects.FORWARD_FROM_WB -> memWbReg.io.out.result
     )
@@ -147,6 +160,7 @@ class Core extends Module with Config {
   
   val forwardedRs2Data = MuxLookup(forwardingUnit.io.forward_rs2_sel, idExReg.io.out.rs2_data)(
     Seq(
+      ForwardingSelects.FORWARD_FROM_EX -> exeu.io.out.result,      // Intra-EX forwarding
       ForwardingSelects.FORWARD_FROM_MEM -> exMemReg.io.out.alu_result,
       ForwardingSelects.FORWARD_FROM_WB -> memWbReg.io.out.result
     )
@@ -161,6 +175,12 @@ class Core extends Module with Config {
   exeu.io.in.ctrl := idExReg.io.out.ctrl
   exeu.io.in.valid := idExReg.io.out.valid
   
+  // Connect branch forwarding signals
+  exeu.io.in.branch_forward_rs1_sel := forwardingUnit.io.forward_branch_rs1_sel
+  exeu.io.in.branch_forward_rs2_sel := forwardingUnit.io.forward_branch_rs2_sel
+  exeu.io.in.forward_mem_result := exMemReg.io.out.alu_result
+  exeu.io.in.forward_wb_result := memWbReg.io.out.result
+
   // EX/MEM register input
   val exMemInput = Wire(new EXMEM_Bundle(XLEN, GPR_LEN))
   exMemInput.pc := idExReg.io.out.pc
