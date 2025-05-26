@@ -74,35 +74,21 @@ class EXE extends Module with Config {
   // Branch Logic
   // ==========================================================================
 
+  // Detect JALR instruction (typically when io.in.ctrl.jump is true and alu_src1_sel is 0)
+  val is_jalr = io.in.ctrl.jump && (io.in.ctrl.alu_src1_sel === 0.U)
+
   // Connect branch unit
+  brUnit.io.pc := io.in.pc
   brUnit.io.rs1_data := io.in.rs1_data
   brUnit.io.rs2_data := io.in.rs2_data
   brUnit.io.branch_type := io.in.ctrl.branch_type
   brUnit.io.is_branch := io.in.ctrl.branch_type =/= BranchTypes.NONE
   brUnit.io.is_jump := io.in.ctrl.jump
+  brUnit.io.is_jalr := is_jalr
   brUnit.io.imm := io.in.imm
 
-  // Calculate branch/jump target
-  val branchOffset = io.in.imm
-  val branchTarget = io.in.pc + branchOffset
-
-  // For jump instructions
-  val jumpTarget = Mux(
-    io.in.ctrl.alu_src1_sel === 0.U,
-    io.in.rs1_data, // JR uses rs1
-    io.in.imm // J/JAL uses immediate
-  )
-
-  // Final target selection
-  val targetAddr = Mux(
-    io.in.ctrl.jump,
-    jumpTarget,
-    branchTarget
-  )
-
-  // Branch/jump taken
-  val branchJumpTaken =
-    (brUnit.io.branch_taken || io.in.ctrl.jump) && io.in.valid
+  // Branch/jump taken logic
+  val branchJumpTaken = brUnit.io.branch_taken && io.in.valid
 
   // ==========================================================================
   // Output connections
@@ -115,5 +101,5 @@ class EXE extends Module with Config {
 
   // Branch control signals
   io.branch_taken := branchJumpTaken
-  io.branch_target := targetAddr
+  io.branch_target := brUnit.io.branch_target
 }

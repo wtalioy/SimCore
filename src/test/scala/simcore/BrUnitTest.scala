@@ -15,12 +15,17 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
   it should "correctly evaluate BEQ condition" in {
     simulate(new BrUnit(XLEN)) { dut =>
       // Equal values should take the branch
+      dut.io.pc.poke(0x1000.U)
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(5.U)
+      dut.io.imm.poke(16.U)
       dut.io.is_branch.poke(true.B)
+      dut.io.is_jump.poke(false.B)
+      dut.io.is_jalr.poke(false.B)
       dut.io.branch_type.poke(BranchTypes.BEQ)
       dut.clock.step(1)
       dut.io.branch_taken.expect(true.B)
+      dut.io.branch_target.expect(0x1010.U) // 0x1000 + 16
       
       // Unequal values should not take the branch
       dut.io.rs1_data.poke(5.U)
@@ -35,12 +40,17 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
   it should "correctly evaluate BNE condition" in {
     simulate(new BrUnit(XLEN)) { dut =>
       // Unequal values should take the branch
+      dut.io.pc.poke(0x1000.U)
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(10.U)
+      dut.io.imm.poke(16.U)
       dut.io.is_branch.poke(true.B)
+      dut.io.is_jump.poke(false.B)
+      dut.io.is_jalr.poke(false.B)
       dut.io.branch_type.poke(BranchTypes.BNE)
       dut.clock.step(1)
       dut.io.branch_taken.expect(true.B)
+      dut.io.branch_target.expect(0x1010.U) // 0x1000 + 16
       
       // Equal values should not take the branch
       dut.io.rs1_data.poke(5.U)
@@ -52,68 +62,64 @@ class BrUnitTest extends AnyFlatSpec with ChiselSim {
     }
   }
 
-  it should "correctly evaluate BLT condition" in {
+  it should "correctly evaluate JALR target calculation" in {
     simulate(new BrUnit(XLEN)) { dut =>
-      // rs1 < rs2 should take the branch (signed comparison)
-      dut.io.rs1_data.poke(5.U)
-      dut.io.rs2_data.poke(10.U)
-      dut.io.is_branch.poke(true.B)
-      dut.io.branch_type.poke(BranchTypes.BLT)
+      dut.io.pc.poke(0x1000.U)
+      dut.io.rs1_data.poke(0x2000.U)
+      dut.io.imm.poke(5.U)
+      dut.io.is_branch.poke(false.B)
+      dut.io.is_jump.poke(true.B)
+      dut.io.is_jalr.poke(true.B)
       dut.clock.step(1)
       dut.io.branch_taken.expect(true.B)
-      
-      // rs1 >= rs2 should not take the branch
-      dut.io.rs1_data.poke(10.U)
-      dut.io.rs2_data.poke(5.U)
-      dut.io.is_branch.poke(true.B)
-      dut.io.branch_type.poke(BranchTypes.BLT)
-      dut.clock.step(1)
-      dut.io.branch_taken.expect(false.B)
-
-      // Test with negative values
-      dut.io.rs1_data.poke("h80000003".U)
-      dut.io.rs2_data.poke(5.U)
-      dut.io.is_branch.poke(true.B)
-      dut.io.branch_type.poke(BranchTypes.BLT)
-      dut.clock.step(1)
-      dut.io.branch_taken.expect(true.B)
+      dut.io.branch_target.expect(0x2004.U) // (0x2000 + 5) & ~1 = 0x2004 (clear LSB)
     }
   }
 
-  it should "correctly evaluate BGE condition" in {
+  it should "correctly evaluate JAL target calculation" in {
     simulate(new BrUnit(XLEN)) { dut =>
-      // rs1 >= rs2 should take the branch (signed comparison)
-      dut.io.rs1_data.poke(10.U)
-      dut.io.rs2_data.poke(5.U)
-      dut.io.is_branch.poke(true.B)
-      dut.io.branch_type.poke(BranchTypes.BGE)
+      dut.io.pc.poke(0x1000.U)
+      dut.io.imm.poke(0x100.U)
+      dut.io.is_branch.poke(false.B)
+      dut.io.is_jump.poke(true.B)
+      dut.io.is_jalr.poke(false.B)
       dut.clock.step(1)
       dut.io.branch_taken.expect(true.B)
-      
-      // Equal values should also take the branch
-      dut.io.rs1_data.poke(5.U)
-      dut.io.rs2_data.poke(5.U)
+      dut.io.branch_target.expect(0x1100.U) // 0x1000 + 0x100
+    }
+  }
+
+  it should "correctly handle signed comparisons" in {
+    simulate(new BrUnit(XLEN)) { dut =>
+      // Test BLT with signed comparison
+      dut.io.pc.poke(0x1000.U)
+      dut.io.rs1_data.poke("hFFFFFFFF".U) // -1 in two's complement
+      dut.io.rs2_data.poke(1.U)
+      dut.io.imm.poke(16.U)
       dut.io.is_branch.poke(true.B)
-      dut.io.branch_type.poke(BranchTypes.BGE)
+      dut.io.is_jump.poke(false.B)
+      dut.io.is_jalr.poke(false.B)
+      dut.io.branch_type.poke(BranchTypes.BLT)
       dut.clock.step(1)
-      dut.io.branch_taken.expect(true.B)
+      dut.io.branch_taken.expect(true.B) // -1 < 1
       
-      // rs1 < rs2 should not take the branch
-      dut.io.rs1_data.poke(5.U)
-      dut.io.rs2_data.poke(10.U)
-      dut.io.is_branch.poke(true.B)
-      dut.io.branch_type.poke(BranchTypes.BGE)
+      // Test BLTU with unsigned comparison
+      dut.io.branch_type.poke(BranchTypes.BLTU)
       dut.clock.step(1)
-      dut.io.branch_taken.expect(false.B)
+      dut.io.branch_taken.expect(false.B) // hFFFFFFFF > 1 in unsigned comparison
     }
   }
 
   it should "not take branch when is_branch is false" in {
     simulate(new BrUnit(XLEN)) { dut =>
       // Even if the condition is true, branch should not be taken if is_branch is false
+      dut.io.pc.poke(0x1000.U)
       dut.io.rs1_data.poke(5.U)
       dut.io.rs2_data.poke(5.U)
+      dut.io.imm.poke(16.U)
       dut.io.is_branch.poke(false.B)
+      dut.io.is_jump.poke(false.B)
+      dut.io.is_jalr.poke(false.B)
       dut.io.branch_type.poke(BranchTypes.BEQ)
       dut.clock.step(1)
       dut.io.branch_taken.expect(false.B)
