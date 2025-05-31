@@ -19,7 +19,7 @@ class BTBOutIO(entryNum: Int, pcBits: Int) extends Bundle {
 }
 
 class BTBUpdateIO(entryNum: Int, pcBits: Int) extends Bundle {
-    val BPTypes = BPTypes()
+    val bp_type = BPTypes()
     val taken = Bool() // cond jump taken or not
     val pc = UInt(pcBits.W)
     val target = UInt(pcBits.W)

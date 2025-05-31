@@ -64,7 +64,7 @@ class BTB(entryNum: Int, pcBits: Int, tagBits: Int, scInit: Int=0, instrBytes: I
     io.pred.out.index := pred_hit_index
 
     when(io.update.valid){
-        when(OHis(io.update.BPTypes, BPTypes.jump)){
+        when(OHis(io.update.bp_type, BPTypes.jump)){
             when(io.update.hit){
                 table(io.update.index).sc := 3.U
                 table(io.update.index).target := io.update.target
@@ -75,7 +75,7 @@ class BTB(entryNum: Int, pcBits: Int, tagBits: Int, scInit: Int=0, instrBytes: I
                 table(entry_p).valid := true.B
                 entry_p := entry_p + 1.U
             }
-        }.elsewhen(OHis(io.update.BPTypes, BPTypes.cond)){
+        }.elsewhen(OHis(io.update.bp_type, BPTypes.cond)){
             when(io.update.hit){
                 val sc = table(io.update.index).sc
                 table(io.update.index).sc := Mux(io.update.taken,

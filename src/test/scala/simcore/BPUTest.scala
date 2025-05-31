@@ -34,7 +34,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // Update the BTB with a jump instruction
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.jump)
+      dut.io.update.bp_type.poke(BPTypes.jump)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x2000.U)
       dut.io.update.taken.poke(true.B)
@@ -63,7 +63,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // Update the BTB with a conditional branch instruction (taken)
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x1020.U)
       dut.io.update.taken.poke(true.B)
@@ -83,7 +83,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       // Update counter when branch is not taken
       val hit_index = dut.io.pred.out.index.peek()
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x1020.U)
       dut.io.update.taken.poke(false.B)
@@ -93,7 +93,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // Update counter again when branch is not taken
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x1020.U)
       dut.io.update.taken.poke(false.B)
@@ -116,7 +116,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
     simulate(new BTB(ENTRY_NUM, XLEN, TAG_BITS)) { dut =>
       // Add first entry
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.jump)
+      dut.io.update.bp_type.poke(BPTypes.jump)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x2000.U)
       dut.io.update.taken.poke(true.B)
@@ -125,7 +125,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // Add second entry
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.jump)
+      dut.io.update.bp_type.poke(BPTypes.jump)
       dut.io.update.pc.poke(0x1100.U)
       dut.io.update.target.poke(0x2100.U)
       dut.io.update.taken.poke(true.B)
@@ -161,7 +161,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
     simulate(new BTB(ENTRY_NUM, XLEN, TAG_BITS)) { dut =>
       // Add an entry
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.jump)
+      dut.io.update.bp_type.poke(BPTypes.jump)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x2000.U)
       dut.io.update.taken.poke(true.B)
@@ -182,7 +182,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // Update the same entry with a new target
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.jump)
+      dut.io.update.bp_type.poke(BPTypes.jump)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x3000.U)
       dut.io.update.taken.poke(true.B)
@@ -206,7 +206,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
     simulate(new BTB(ENTRY_NUM, XLEN, TAG_BITS)) { dut =>
       // Add a conditional branch entry
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.target.poke(0x1020.U)
       dut.io.update.taken.poke(true.B)
@@ -224,7 +224,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // 1. Update not taken - should go from weakly taken (10) to weakly not taken (01)
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.taken.poke(false.B)
       dut.io.update.hit.poke(true.B)
@@ -239,7 +239,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // 2. Update not taken again - should go to strongly not taken (00)
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.taken.poke(false.B)
       dut.io.update.hit.poke(true.B)
@@ -248,7 +248,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // 3. Update taken - should go to weakly not taken (01)
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.taken.poke(true.B)
       dut.io.update.hit.poke(true.B)
@@ -263,7 +263,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // 4. Update taken again - should go to weakly taken (10)
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.taken.poke(true.B)
       dut.io.update.hit.poke(true.B)
@@ -278,7 +278,7 @@ class BPUTest extends AnyFlatSpec with ChiselSim {
       
       // 5. Update taken again - should go to strongly taken (11)
       dut.io.update.valid.poke(true.B)
-      dut.io.update.BPTypes.poke(BPTypes.cond)
+      dut.io.update.bp_type.poke(BPTypes.cond)
       dut.io.update.pc.poke(0x1000.U)
       dut.io.update.taken.poke(true.B)
       dut.io.update.hit.poke(true.B)
