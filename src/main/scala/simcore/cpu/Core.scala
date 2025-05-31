@@ -153,7 +153,6 @@ class Core extends Module with Config {
   // Apply forwarding to register data
   val forwardedRs1Data = MuxLookup(forwardingUnit.io.forward_rs1_sel, idExReg.io.out.rs1_data)(
     Seq(
-      ForwardingSelects.FORWARD_FROM_EX -> exeu.io.out.result,      // Intra-EX forwarding
       ForwardingSelects.FORWARD_FROM_MEM -> exMemReg.io.out.alu_result,
       ForwardingSelects.FORWARD_FROM_WB -> memWbReg.io.out.result
     )
@@ -161,7 +160,6 @@ class Core extends Module with Config {
   
   val forwardedRs2Data = MuxLookup(forwardingUnit.io.forward_rs2_sel, idExReg.io.out.rs2_data)(
     Seq(
-      ForwardingSelects.FORWARD_FROM_EX -> exeu.io.out.result,      // Intra-EX forwarding
       ForwardingSelects.FORWARD_FROM_MEM -> exMemReg.io.out.alu_result,
       ForwardingSelects.FORWARD_FROM_WB -> memWbReg.io.out.result
     )

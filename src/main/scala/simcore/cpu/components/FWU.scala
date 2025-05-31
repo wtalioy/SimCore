@@ -46,12 +46,8 @@ class ForwardingUnit(addrBits: Int) extends Module {
   
   // RS1 forwarding logic for main execution path (ALU)
   when(io.uses_rs1 && io.rs1_addr =/= 0.U) {
-    // Check for forwarding from EX stage (highest priority) - allows for intra-stage forwarding
-    when(io.ex_valid && io.ex_reg_write && (io.ex_rd_addr === io.rs1_addr)) {
-      io.forward_rs1_sel := ForwardingSelects.FORWARD_FROM_EX
-    }
     // Check for forwarding from EX/MEM stage
-    .elsewhen(io.ex_mem_reg_write && (io.ex_mem_rd_addr === io.rs1_addr)) {
+    when(io.ex_mem_reg_write && (io.ex_mem_rd_addr === io.rs1_addr)) {
       io.forward_rs1_sel := ForwardingSelects.FORWARD_FROM_MEM
     }
     // Check for forwarding from MEM/WB stage
@@ -62,12 +58,8 @@ class ForwardingUnit(addrBits: Int) extends Module {
   
   // RS2 forwarding logic for main execution path (ALU)
   when(io.uses_rs2 && io.rs2_addr =/= 0.U) {
-    // Check for forwarding from EX stage (highest priority) - allows for intra-stage forwarding
-    when(io.ex_valid && io.ex_reg_write && (io.ex_rd_addr === io.rs2_addr)) {
-      io.forward_rs2_sel := ForwardingSelects.FORWARD_FROM_EX
-    }
     // Check for forwarding from EX/MEM stage
-    .elsewhen(io.ex_mem_reg_write && (io.ex_mem_rd_addr === io.rs2_addr)) {
+    when(io.ex_mem_reg_write && (io.ex_mem_rd_addr === io.rs2_addr)) {
       io.forward_rs2_sel := ForwardingSelects.FORWARD_FROM_MEM
     }
     // Check for forwarding from MEM/WB stage
