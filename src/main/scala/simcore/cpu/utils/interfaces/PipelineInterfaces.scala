@@ -12,6 +12,8 @@ class IFIDIO(dataBits: Int) extends Bundle {
   val pc = UInt(dataBits.W)
   val instr = UInt(dataBits.W)
   val valid = Bool()
+  val predicted_taken = Bool()
+  val predicted_target = UInt(dataBits.W)
 }
 
 object IFIDIO {
@@ -20,6 +22,8 @@ object IFIDIO {
     bundle.pc := 0.U
     bundle.instr := 0.U
     bundle.valid := false.B
+    bundle.predicted_taken := false.B
+    bundle.predicted_target := 0.U
     bundle
   }
 }
@@ -35,6 +39,8 @@ class IDEXIO(dataBits: Int, addrBits: Int) extends Bundle {
   val imm = UInt(dataBits.W)
   val ctrl = new ControlIO()
   val valid = Bool()
+  val predicted_taken = Bool()
+  val predicted_target = UInt(dataBits.W)
 }
 
 object IDEXIO {
@@ -49,6 +55,8 @@ object IDEXIO {
     bundle.imm := 0.U
     bundle.ctrl := ControlIO.NOP()
     bundle.valid := false.B
+    bundle.predicted_taken := false.B
+    bundle.predicted_target := 0.U
     bundle
   }
 }

@@ -3,7 +3,7 @@ package simcore.cpu.stages
 import chisel3._
 import chisel3.util._
 import simcore.cpu.components.{ALUUnit, BrUnit}
-import simcore.cpu.utils.constants.{ALUOps, BranchTypes, ForwardingSelects}
+import simcore.cpu.utils.constants.{ALUOps, BPTypes, BranchTypes, ForwardingSelects}
 import simcore.cpu.utils.interfaces.ControlIO
 import simcore.cpu.Config
 
@@ -25,6 +25,8 @@ class EXE extends Module with Config {
       val branch_forward_rs2_sel = Input(UInt(2.W))
       val forward_mem_result = Input(UInt(XLEN.W))
       val forward_wb_result = Input(UInt(XLEN.W))
+      val predicted_taken = Input(Bool())
+      val predicted_target = Input(UInt(XLEN.W))
     }
 
     // Output to MEM stage
@@ -37,6 +39,12 @@ class EXE extends Module with Config {
     // Branch control signals for fetch redirect
     val branch_taken = Output(Bool())
     val branch_target = Output(UInt(XLEN.W))
+    
+    // Branch prediction resolution signals
+    val branch_resolved = Output(Bool())
+    val branch_hit = Output(Bool())
+    val branch_index = Output(UInt(log2Ceil(BTB_ENTRY_NUM).W))
+    val branch_type = Output(UInt(2.W))
   })
 
   // Functional units
@@ -107,7 +115,28 @@ class EXE extends Module with Config {
 
   // Branch/jump taken logic
   val branchJumpTaken = brUnit.io.branch_taken && io.in.valid
-
+  
+  // ==========================================================================
+  // Branch Prediction Resolution
+  // ==========================================================================
+  
+  // Determine branch type for branch predictor
+  val bp_type = Wire(UInt(2.W))
+  bp_type := Mux(io.in.ctrl.jump, BPTypes.jump, 
+             Mux(io.in.ctrl.branch_type =/= BranchTypes.NONE, BPTypes.cond, 
+                 BPTypes.dontcare))
+  
+  // Branch resolution logic
+  val is_branch_or_jump = io.in.ctrl.branch_type =/= BranchTypes.NONE || io.in.ctrl.jump
+  
+  // Branch hit detection - for now we'll just use a simple dummy value
+  // In a real implementation, this would be more sophisticated and track BTB hit information
+  val branch_hit = io.in.predicted_taken || io.in.predicted_target === brUnit.io.branch_target
+  
+  // Branch index - for now we'll just use a dummy value
+  // In a real implementation, this would track the BTB entry index that matched
+  val branch_index = 0.U(log2Ceil(BTB_ENTRY_NUM).W)
+  
   // ==========================================================================
   // Output connections
   // ==========================================================================
@@ -120,4 +149,10 @@ class EXE extends Module with Config {
   // Branch control signals
   io.branch_taken := branchJumpTaken
   io.branch_target := brUnit.io.branch_target
+  
+  // Branch prediction resolution signals
+  io.branch_resolved := is_branch_or_jump && io.in.valid
+  io.branch_hit := branch_hit
+  io.branch_index := branch_index
+  io.branch_type := bp_type
 }

@@ -27,6 +27,12 @@ trait Config {
   // Initial values
   def PC_START = "h80000000".U(XLEN.W)  // Default program counter start
   
+  // Branch Prediction parameters
+  def BTB_ENTRY_NUM = 16     // Number of BTB entries
+  def BTB_TAG_BITS = 8       // Number of tag bits
+  def INSTR_BYTES = 4        // Size of each instruction in bytes
+  def BTB_SC_INIT = 2        // Initial value for 2-bit saturating counter (weakly taken)
+  
   // Debug parameters
   def DEBUG_MODE = false     // Enable debug output
 }

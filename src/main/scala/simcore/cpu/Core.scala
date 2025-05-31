@@ -61,6 +61,27 @@ class Core extends Module with Config {
   val memWbReg = Module(new PipelineRegister(new MEMWBIO(XLEN, GPR_LEN)))
 
   //==========================================================================
+  // Branch Prediction Signals
+  //==========================================================================
+  // Branch prediction update signals
+  val bp_update = Wire(new BTBUpdateIO(BTB_ENTRY_NUM, XLEN))
+  bp_update.valid := exeu.io.branch_resolved
+  bp_update.pc := idExReg.io.out.pc
+  bp_update.bp_type := exeu.io.branch_type
+  bp_update.taken := exeu.io.branch_taken
+  bp_update.target := exeu.io.branch_target
+  bp_update.hit := exeu.io.branch_hit
+  bp_update.index := exeu.io.branch_index
+  
+  // Branch misprediction logic
+  val predicted_taken = idExReg.io.out.predicted_taken
+  val predicted_target = idExReg.io.out.predicted_target
+  val branch_mispredicted = exeu.io.branch_resolved && 
+                           ((!predicted_taken && exeu.io.branch_taken) || 
+                            (predicted_taken && !exeu.io.branch_taken) ||
+                            (predicted_taken && exeu.io.branch_taken && predicted_target =/= exeu.io.branch_target))
+
+  //==========================================================================
   // Pipeline Control Connections
   //==========================================================================
   // Connect hazard detection unit
@@ -96,7 +117,7 @@ class Core extends Module with Config {
   // Connect pipeline control unit
   pipelineControl.io.mem_stall := memu.io.stall_out
   pipelineControl.io.load_use_stall := hazardUnit.io.pipeline_stall // Use combined stall signal
-  pipelineControl.io.branch_taken := exeu.io.branch_taken
+  pipelineControl.io.branch_taken := branch_mispredicted // Use branch misprediction signal instead of actual branch taken
 
   //==========================================================================
   // Pipeline Stage 1: Instruction Fetch
@@ -106,8 +127,11 @@ class Core extends Module with Config {
 
   // Control flow signals
   ifu.io.stall := pipelineControl.io.pipeline_stall
-  ifu.io.redirect_valid := exeu.io.branch_taken
+  ifu.io.redirect_valid := branch_mispredicted
   ifu.io.redirect_target := exeu.io.branch_target
+  
+  // Connect branch prediction update signals
+  ifu.io.bp_update := bp_update
 
   // IF/ID register control
   ifIdReg.io.in := ifu.io.out
@@ -128,7 +152,7 @@ class Core extends Module with Config {
   val idExInput = Wire(new IDEXIO(XLEN, GPR_LEN))
   
   // Prepare ID/EX register input
-  when (hazardUnit.io.load_use_stall || exeu.io.branch_taken) {
+  when (hazardUnit.io.load_use_stall || branch_mispredicted) {
     idExInput := IDEXIO.NOP(XLEN, GPR_LEN)
   }.otherwise {
     idExInput.pc := idu.io.pc
@@ -140,6 +164,10 @@ class Core extends Module with Config {
     idExInput.imm := idu.io.imm
     idExInput.ctrl := idu.io.ctrl
     idExInput.valid := idu.io.valid
+    
+    // Pass branch prediction information
+    idExInput.predicted_taken := ifIdReg.io.out.predicted_taken
+    idExInput.predicted_target := ifIdReg.io.out.predicted_target
   }
   
   // ID/EX register control
@@ -173,6 +201,10 @@ class Core extends Module with Config {
   exeu.io.in.imm := idExReg.io.out.imm
   exeu.io.in.ctrl := idExReg.io.out.ctrl
   exeu.io.in.valid := idExReg.io.out.valid
+  
+  // Connect branch prediction signals
+  exeu.io.in.predicted_taken := idExReg.io.out.predicted_taken
+  exeu.io.in.predicted_target := idExReg.io.out.predicted_target
   
   // Connect branch forwarding signals
   exeu.io.in.branch_forward_rs1_sel := forwardingUnit.io.forward_branch_rs1_sel
