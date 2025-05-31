@@ -2,7 +2,7 @@ package simcore.cpu.components
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.utils.ForwardingSelects
+import simcore.cpu.utils.constants.ForwardingSelects
 
 /**
  * Enhanced Forwarding Unit

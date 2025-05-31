@@ -2,13 +2,10 @@ package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.components.ALUUnit
-import simcore.cpu.components.BrUnit
-import simcore.cpu.utils.ALUOps
-import simcore.cpu.utils.BranchTypes
-import simcore.cpu.utils.ControlBundle
+import simcore.cpu.components.{ALUUnit, BrUnit}
+import simcore.cpu.utils.constants.{ALUOps, BranchTypes, ForwardingSelects}
+import simcore.cpu.utils.interfaces.ControlIO
 import simcore.cpu.Config
-import simcore.cpu.utils.ForwardingSelects
 
 /** Execution Unit Handles ALU operations, memory access, and branch/jump
   * decisions
@@ -22,7 +19,7 @@ class EXE extends Module with Config {
       val rs2_data = Input(UInt(XLEN.W))
       val rd_addr = Input(UInt(GPR_LEN.W))
       val imm = Input(UInt(XLEN.W))
-      val ctrl = Input(new ControlBundle())
+      val ctrl = Input(new ControlIO())
       val valid = Input(Bool())
       val branch_forward_rs1_sel = Input(UInt(2.W))
       val branch_forward_rs2_sel = Input(UInt(2.W))

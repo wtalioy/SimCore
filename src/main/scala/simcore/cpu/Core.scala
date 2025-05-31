@@ -12,7 +12,8 @@ import simcore.cpu.components.ForwardingUnit
 import simcore.cpu.components.PipelineControlUnit
 import simcore.cpu.components.PipelineRegister
 
-import simcore.cpu.utils._
+import simcore.cpu.utils.interfaces._
+import simcore.cpu.utils.constants._
 
 /**
  * CPU Core
@@ -54,10 +55,10 @@ class Core extends Module with Config {
   //==========================================================================
   // Pipeline Register Instantiation
   //==========================================================================
-  val ifIdReg = Module(new PipelineRegister(new IFID_Bundle(XLEN)))
-  val idExReg = Module(new PipelineRegister(new IDEX_Bundle(XLEN, GPR_LEN)))
-  val exMemReg = Module(new PipelineRegister(new EXMEM_Bundle(XLEN, GPR_LEN)))
-  val memWbReg = Module(new PipelineRegister(new MEMWB_Bundle(XLEN, GPR_LEN)))
+  val ifIdReg = Module(new PipelineRegister(new IFIDIO(XLEN)))
+  val idExReg = Module(new PipelineRegister(new IDEXIO(XLEN, GPR_LEN)))
+  val exMemReg = Module(new PipelineRegister(new EXMEMIO(XLEN, GPR_LEN)))
+  val memWbReg = Module(new PipelineRegister(new MEMWBIO(XLEN, GPR_LEN)))
 
   //==========================================================================
   // Pipeline Control Connections
@@ -124,11 +125,11 @@ class Core extends Module with Config {
   regFile.io.raddr(1) := idu.io.rs2_addr
   
   // ID/EX register input
-  val idExInput = Wire(new IDEX_Bundle(XLEN, GPR_LEN))
+  val idExInput = Wire(new IDEXIO(XLEN, GPR_LEN))
   
   // Prepare ID/EX register input
   when (hazardUnit.io.load_use_stall || exeu.io.branch_taken) {
-    idExInput := IDEX_Bundle.NOP(XLEN, GPR_LEN)
+    idExInput := IDEXIO.NOP(XLEN, GPR_LEN)
   }.otherwise {
     idExInput.pc := idu.io.pc
     idExInput.rs1_addr := idu.io.rs1_addr
@@ -182,7 +183,7 @@ class Core extends Module with Config {
   exeu.io.in.forward_wb_result := memWbReg.io.out.result
 
   // EX/MEM register input
-  val exMemInput = Wire(new EXMEM_Bundle(XLEN, GPR_LEN))
+  val exMemInput = Wire(new EXMEMIO(XLEN, GPR_LEN))
   exMemInput.pc := idExReg.io.out.pc
   exMemInput.alu_result := exeu.io.out.result
   exMemInput.rd_addr := exeu.io.out.rd_addr

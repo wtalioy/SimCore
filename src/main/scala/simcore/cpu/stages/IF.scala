@@ -2,8 +2,7 @@ package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.utils.IBusIO
-import simcore.cpu.utils.IFID_Bundle
+import simcore.cpu.utils.interfaces.{IBusIO, IFIDIO}
 import simcore.cpu.Config
 import simcore.cpu.GlobalConfig
 
@@ -22,7 +21,7 @@ class IF extends Module with Config {
     val stall = Input(Bool())
     
     // Output to ID stage
-    val out = Output(new IFID_Bundle(XLEN))
+    val out = Output(new IFIDIO(XLEN))
   })
 
   // Program Counter register
@@ -30,7 +29,7 @@ class IF extends Module with Config {
   
   // Output state registers - properly initialize with hardware values
   val outReg = RegInit({
-    val init = Wire(new IFID_Bundle(XLEN))
+    val init = Wire(new IFIDIO(XLEN))
     init.pc := 0.U
     init.instr := 0.U
     init.valid := false.B

@@ -2,7 +2,7 @@ package simcore.cpu.components
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.utils.BranchTypes
+import simcore.cpu.utils.constants.BranchTypes
 
 class BrUnit(dataBits: Int) extends Module {
   val io = IO(new Bundle {

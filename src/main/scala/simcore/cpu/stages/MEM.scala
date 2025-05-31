@@ -2,9 +2,7 @@ package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.utils.DBusIO
-import simcore.cpu.utils.EXMEM_Bundle
-import simcore.cpu.utils.MEMWB_Bundle
+import simcore.cpu.utils.interfaces.{DBusIO, EXMEMIO, MEMWBIO}
 import simcore.cpu.Config
 
 /** Memory Access Unit
@@ -14,10 +12,10 @@ import simcore.cpu.Config
 class MEM extends Module with Config {
   val io = IO(new Bundle {
     // Input from EX stage
-    val in = Input(new EXMEM_Bundle(XLEN, GPR_LEN))
+    val in = Input(new EXMEMIO(XLEN, GPR_LEN))
     
     // Output to WB stage
-    val out = Output(new MEMWB_Bundle(XLEN, GPR_LEN))
+    val out = Output(new MEMWBIO(XLEN, GPR_LEN))
     
     // Memory interface - using DBusIO directly, not Flipped
     val dbus = new DBusIO(XLEN)
@@ -27,7 +25,7 @@ class MEM extends Module with Config {
   })
   
   // Default output values
-  io.out := MEMWB_Bundle.NOP(XLEN, GPR_LEN)
+  io.out := MEMWBIO.NOP(XLEN, GPR_LEN)
   io.stall_out := false.B
   
   // Default memory interface values

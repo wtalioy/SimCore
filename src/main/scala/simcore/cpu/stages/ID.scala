@@ -2,10 +2,8 @@ package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.utils.ALUOps
-import simcore.cpu.utils.BranchTypes
-import simcore.cpu.utils.ControlBundle
-import simcore.cpu.utils.IFID_Bundle
+import simcore.cpu.utils.constants.{ALUOps, BranchTypes}
+import simcore.cpu.utils.interfaces.{ControlIO, IFIDIO}
 import simcore.cpu.Config
 
 // Define MIPS Opcodes and Funct codes (subset)
@@ -64,7 +62,7 @@ object MIPSFuncts {
 class ID extends Module with Config {
   val io = IO(new Bundle {
     // Input from IF stage
-    val in = Input(new IFID_Bundle(XLEN))
+    val in = Input(new IFIDIO(XLEN))
 
     // Output signals for ID stage
     val pc = Output(UInt(XLEN.W))
@@ -72,7 +70,7 @@ class ID extends Module with Config {
     val rs2_addr = Output(UInt(GPR_LEN.W))
     val rd_addr = Output(UInt(GPR_LEN.W))
     val imm = Output(UInt(XLEN.W))
-    val ctrl = Output(new ControlBundle())
+    val ctrl = Output(new ControlIO())
     val valid = Output(Bool())
 
     // Additional outputs for hazard detection
@@ -101,7 +99,7 @@ class ID extends Module with Config {
   io.rs2_addr := 0.U
   io.rd_addr := 0.U
   io.imm := 0.U
-  io.ctrl := ControlBundle.NOP()
+  io.ctrl := ControlIO.NOP()
   io.valid := io.in.valid
   io.uses_rs1 := false.B
   io.uses_rs2 := false.B
