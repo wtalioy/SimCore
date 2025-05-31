@@ -5,9 +5,8 @@ import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import simcore.cpu.stages.ID
-import simcore.cpu.utils.ALUOps
-import simcore.cpu.utils.BranchTypes
-import simcore.cpu.utils.IFID_Bundle
+import simcore.cpu.utils.constants.{ALUOps, BranchTypes}
+import simcore.cpu.utils.interfaces.IFIDIO
 
 class IDUTest extends AnyFlatSpec with ChiselSim { // Updated
   behavior of "Decode Stage"
