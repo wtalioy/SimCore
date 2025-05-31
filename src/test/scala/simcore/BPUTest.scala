@@ -5,7 +5,8 @@ import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import simcore.cpu.components._
-import simcore.cpu.utils.{BPTypes, OHis, isPowerOf2}
+import simcore.cpu.utils.constants.BPTypes
+import simcore.cpu.utils.isPowerOf2
 
 class BPUTest extends AnyFlatSpec with ChiselSim {
   val XLEN = 32

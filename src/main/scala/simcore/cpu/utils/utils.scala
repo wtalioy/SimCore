@@ -10,7 +10,7 @@ object isPowerOf2{
 }
 
 object OHis{
-  def apply(sig: UInt, pattern: String): Bool = {
-    (sig & pattern.U) === pattern.U
+  def apply(sig: UInt, pattern: UInt): Bool = {
+    sig === pattern
   }
 }
