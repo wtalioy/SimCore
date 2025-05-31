@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim // Added
 import org.scalatest.flatspec.AnyFlatSpec
 import simcore.cpu.components.ALUUnit
-import simcore.cpu.utils.ALUOps
+import simcore.cpu.utils.constants.ALUOps
 
 
 class ALUUnitTest extends AnyFlatSpec with ChiselSim { // Updated

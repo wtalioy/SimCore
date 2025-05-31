@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3.simulator.scalatest.ChiselSim
 import org.scalatest.flatspec.AnyFlatSpec
 import simcore.cpu.Core
-import simcore.cpu.utils.ForwardingSelects
+import simcore.cpu.utils.constants.ForwardingSelects
 
 class MockMemory(
     val instructions: Seq[BigInt],

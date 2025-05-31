@@ -2,7 +2,7 @@ package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.utils.MEMWB_Bundle
+import simcore.cpu.utils.interfaces.MEMWBIO
 import simcore.cpu.Config
 
 /** WriteBack Stage Unit
@@ -12,7 +12,7 @@ import simcore.cpu.Config
 class WB extends Module with Config {
   val io = IO(new Bundle {
     // Input from MEM stage
-    val in = Input(new MEMWB_Bundle(XLEN, GPR_LEN))
+    val in = Input(new MEMWBIO(XLEN, GPR_LEN))
     
     // Register writeback interface
     val rd_addr = Output(UInt(GPR_LEN.W))

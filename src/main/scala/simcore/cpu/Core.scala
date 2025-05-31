@@ -12,7 +12,8 @@ import simcore.cpu.components.ForwardingUnit
 import simcore.cpu.components.PipelineControlUnit
 import simcore.cpu.components.PipelineRegister
 
-import simcore.cpu.utils._
+import simcore.cpu.utils.interfaces._
+import simcore.cpu.utils.constants._
 
 /**
  * CPU Core
@@ -54,10 +55,31 @@ class Core extends Module with Config {
   //==========================================================================
   // Pipeline Register Instantiation
   //==========================================================================
-  val ifIdReg = Module(new PipelineRegister(new IFID_Bundle(XLEN)))
-  val idExReg = Module(new PipelineRegister(new IDEX_Bundle(XLEN, GPR_LEN)))
-  val exMemReg = Module(new PipelineRegister(new EXMEM_Bundle(XLEN, GPR_LEN)))
-  val memWbReg = Module(new PipelineRegister(new MEMWB_Bundle(XLEN, GPR_LEN)))
+  val ifIdReg = Module(new PipelineRegister(new IFIDIO(XLEN)))
+  val idExReg = Module(new PipelineRegister(new IDEXIO(XLEN, GPR_LEN)))
+  val exMemReg = Module(new PipelineRegister(new EXMEMIO(XLEN, GPR_LEN)))
+  val memWbReg = Module(new PipelineRegister(new MEMWBIO(XLEN, GPR_LEN)))
+
+  //==========================================================================
+  // Branch Prediction Signals
+  //==========================================================================
+  // Branch prediction update signals
+  val bp_update = Wire(new BTBUpdateIO(BTB_ENTRY_NUM, XLEN))
+  bp_update.valid := exeu.io.branch_resolved
+  bp_update.pc := idExReg.io.out.pc
+  bp_update.bp_type := exeu.io.branch_type
+  bp_update.taken := exeu.io.branch_taken
+  bp_update.target := exeu.io.branch_target
+  bp_update.hit := exeu.io.branch_hit
+  bp_update.index := exeu.io.branch_index
+  
+  // Branch misprediction logic
+  val predicted_taken = idExReg.io.out.predicted_taken
+  val predicted_target = idExReg.io.out.predicted_target
+  val branch_mispredicted = exeu.io.branch_resolved && 
+                           ((!predicted_taken && exeu.io.branch_taken) || 
+                            (predicted_taken && !exeu.io.branch_taken) ||
+                            (predicted_taken && exeu.io.branch_taken && predicted_target =/= exeu.io.branch_target))
 
   //==========================================================================
   // Pipeline Control Connections
@@ -67,23 +89,35 @@ class Core extends Module with Config {
   hazardUnit.io.id_rs2_addr := idu.io.rs2_addr
   hazardUnit.io.id_uses_rs1 := idu.io.uses_rs1
   hazardUnit.io.id_uses_rs2 := idu.io.uses_rs2
+  hazardUnit.io.id_is_branch := idu.io.ctrl.branch_type =/= 0.U
+  hazardUnit.io.id_is_store := idu.io.ctrl.mem_write
+  hazardUnit.io.id_is_load := idu.io.ctrl.mem_read
   hazardUnit.io.ex_rd_addr := idExReg.io.out.rd_addr
   hazardUnit.io.ex_is_load := idExReg.io.out.ctrl.mem_read
+  hazardUnit.io.ex_is_mul_div := false.B // Future: add mul/div detection
+  hazardUnit.io.mem_is_load := exMemReg.io.out.ctrl.mem_read
+  hazardUnit.io.mem_rd_addr := exMemReg.io.out.rd_addr
+  hazardUnit.io.alu_busy := false.B // Future: add multi-cycle ALU operations
+  hazardUnit.io.mem_busy := memu.io.stall_out
   
   // Connect forwarding unit
   forwardingUnit.io.rs1_addr := idExReg.io.out.rs1_addr
   forwardingUnit.io.rs2_addr := idExReg.io.out.rs2_addr
-  forwardingUnit.io.uses_rs1 := idExReg.io.out.ctrl.uses_rs1
-  forwardingUnit.io.uses_rs2 := idExReg.io.out.ctrl.uses_rs2
+  forwardingUnit.io.ex_rd_addr := idExReg.io.out.rd_addr
   forwardingUnit.io.ex_mem_rd_addr := exMemReg.io.out.rd_addr
   forwardingUnit.io.mem_wb_rd_addr := memWbReg.io.out.rd_addr
+  forwardingUnit.io.uses_rs1 := idExReg.io.out.ctrl.uses_rs1
+  forwardingUnit.io.uses_rs2 := idExReg.io.out.ctrl.uses_rs2
+  forwardingUnit.io.is_branch := idExReg.io.out.ctrl.branch_type =/= 0.U
+  forwardingUnit.io.ex_reg_write := idExReg.io.out.ctrl.reg_write
   forwardingUnit.io.ex_mem_reg_write := exMemReg.io.out.ctrl.reg_write
   forwardingUnit.io.mem_wb_reg_write := memWbReg.io.out.ctrl.reg_write
+  forwardingUnit.io.ex_valid := idExReg.io.out.valid
   
   // Connect pipeline control unit
   pipelineControl.io.mem_stall := memu.io.stall_out
-  pipelineControl.io.load_use_stall := hazardUnit.io.load_use_stall
-  pipelineControl.io.branch_taken := exeu.io.branch_taken
+  pipelineControl.io.load_use_stall := hazardUnit.io.pipeline_stall // Use combined stall signal
+  pipelineControl.io.branch_taken := branch_mispredicted // Use branch misprediction signal instead of actual branch taken
 
   //==========================================================================
   // Pipeline Stage 1: Instruction Fetch
@@ -93,8 +127,11 @@ class Core extends Module with Config {
 
   // Control flow signals
   ifu.io.stall := pipelineControl.io.pipeline_stall
-  ifu.io.redirect_valid := exeu.io.branch_taken
+  ifu.io.redirect_valid := branch_mispredicted
   ifu.io.redirect_target := exeu.io.branch_target
+  
+  // Connect branch prediction update signals
+  ifu.io.bp_update := bp_update
 
   // IF/ID register control
   ifIdReg.io.in := ifu.io.out
@@ -112,11 +149,11 @@ class Core extends Module with Config {
   regFile.io.raddr(1) := idu.io.rs2_addr
   
   // ID/EX register input
-  val idExInput = Wire(new IDEX_Bundle(XLEN, GPR_LEN))
+  val idExInput = Wire(new IDEXIO(XLEN, GPR_LEN))
   
   // Prepare ID/EX register input
-  when (hazardUnit.io.load_use_stall || exeu.io.branch_taken) {
-    idExInput := IDEX_Bundle.NOP(XLEN, GPR_LEN)
+  when (hazardUnit.io.load_use_stall || branch_mispredicted) {
+    idExInput := IDEXIO.NOP(XLEN, GPR_LEN)
   }.otherwise {
     idExInput.pc := idu.io.pc
     idExInput.rs1_addr := idu.io.rs1_addr
@@ -127,6 +164,10 @@ class Core extends Module with Config {
     idExInput.imm := idu.io.imm
     idExInput.ctrl := idu.io.ctrl
     idExInput.valid := idu.io.valid
+    
+    // Pass branch prediction information
+    idExInput.predicted_taken := ifIdReg.io.out.predicted_taken
+    idExInput.predicted_target := ifIdReg.io.out.predicted_target
   }
   
   // ID/EX register control
@@ -161,8 +202,18 @@ class Core extends Module with Config {
   exeu.io.in.ctrl := idExReg.io.out.ctrl
   exeu.io.in.valid := idExReg.io.out.valid
   
+  // Connect branch prediction signals
+  exeu.io.in.predicted_taken := idExReg.io.out.predicted_taken
+  exeu.io.in.predicted_target := idExReg.io.out.predicted_target
+  
+  // Connect branch forwarding signals
+  exeu.io.in.branch_forward_rs1_sel := forwardingUnit.io.forward_branch_rs1_sel
+  exeu.io.in.branch_forward_rs2_sel := forwardingUnit.io.forward_branch_rs2_sel
+  exeu.io.in.forward_mem_result := exMemReg.io.out.alu_result
+  exeu.io.in.forward_wb_result := memWbReg.io.out.result
+
   // EX/MEM register input
-  val exMemInput = Wire(new EXMEM_Bundle(XLEN, GPR_LEN))
+  val exMemInput = Wire(new EXMEMIO(XLEN, GPR_LEN))
   exMemInput.pc := idExReg.io.out.pc
   exMemInput.alu_result := exeu.io.out.result
   exMemInput.rd_addr := exeu.io.out.rd_addr

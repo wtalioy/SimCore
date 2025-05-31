@@ -2,10 +2,8 @@ package simcore.cpu.stages
 
 import chisel3._
 import chisel3.util._
-import simcore.cpu.utils.ALUOps
-import simcore.cpu.utils.BranchTypes
-import simcore.cpu.utils.ControlBundle
-import simcore.cpu.utils.IFID_Bundle
+import simcore.cpu.utils.constants.{ALUOps, BranchTypes}
+import simcore.cpu.utils.interfaces.{ControlIO, IFIDIO}
 import simcore.cpu.Config
 
 // Define MIPS Opcodes and Funct codes (subset)
@@ -25,9 +23,19 @@ object MIPSOpcodes {
   val OP_SW = "b101011".U
   val OP_BEQ = "b000100".U
   val OP_BNE = "b000101".U
+  // Single-operand branches
+  val OP_REGIMM = "b000001".U // For BGEZ/BLTZ
+  val OP_BGTZ = "b000111".U
+  val OP_BLEZ = "b000110".U
   // J-Type
   val OP_J = "b000010".U
   val OP_JAL = "b000011".U
+}
+
+// REGIMM rt field values (for BGEZ/BLTZ)
+object MIPSRtCodes {
+  val RT_BLTZ = "b00000".U
+  val RT_BGEZ = "b00001".U
 }
 
 object MIPSFuncts {
@@ -54,7 +62,7 @@ object MIPSFuncts {
 class ID extends Module with Config {
   val io = IO(new Bundle {
     // Input from IF stage
-    val in = Input(new IFID_Bundle(XLEN))
+    val in = Input(new IFIDIO(XLEN))
 
     // Output signals for ID stage
     val pc = Output(UInt(XLEN.W))
@@ -62,7 +70,7 @@ class ID extends Module with Config {
     val rs2_addr = Output(UInt(GPR_LEN.W))
     val rd_addr = Output(UInt(GPR_LEN.W))
     val imm = Output(UInt(XLEN.W))
-    val ctrl = Output(new ControlBundle())
+    val ctrl = Output(new ControlIO())
     val valid = Output(Bool())
 
     // Additional outputs for hazard detection
@@ -91,7 +99,7 @@ class ID extends Module with Config {
   io.rs2_addr := 0.U
   io.rd_addr := 0.U
   io.imm := 0.U
-  io.ctrl := ControlBundle.NOP()
+  io.ctrl := ControlIO.NOP()
   io.valid := io.in.valid
   io.uses_rs1 := false.B
   io.uses_rs2 := false.B
@@ -100,7 +108,7 @@ class ID extends Module with Config {
   val ctrl_alu_op = WireDefault(0.U(4.W))
   val ctrl_alu_src1_sel = WireDefault(0.U(2.W))
   val ctrl_alu_src2_sel = WireDefault(0.U(2.W))
-  val ctrl_branch_type = WireDefault(0.U(3.W))
+  val ctrl_branch_type = WireDefault(0.U(4.W)) // Updated to 4 bits
   val ctrl_jump = WireDefault(false.B)
   val ctrl_mem_read = WireDefault(false.B)
   val ctrl_mem_write = WireDefault(false.B)
@@ -318,6 +326,39 @@ class ID extends Module with Config {
         ctrl_branch_type := BranchTypes.BNE
         ctrl_uses_rs1 := true.B
         ctrl_uses_rs2 := true.B
+      }
+
+      // Handle single-operand branches
+      is(MIPSOpcodes.OP_REGIMM) {
+        io.rs1_addr := rs
+        io.imm := (imm16_signed.asUInt << 2) // Branch address calculation
+        ctrl_uses_rs1 := true.B
+        ctrl_uses_rs2 := false.B
+        
+        switch(rt) {
+          is(MIPSRtCodes.RT_BLTZ) {
+            ctrl_branch_type := BranchTypes.BLTZ
+          }
+          is(MIPSRtCodes.RT_BGEZ) {
+            ctrl_branch_type := BranchTypes.BGEZ
+          }
+        }
+      }
+      
+      is(MIPSOpcodes.OP_BGTZ) {
+        io.rs1_addr := rs
+        io.imm := (imm16_signed.asUInt << 2) // Branch address calculation
+        ctrl_branch_type := BranchTypes.BGTZ
+        ctrl_uses_rs1 := true.B
+        ctrl_uses_rs2 := false.B
+      }
+      
+      is(MIPSOpcodes.OP_BLEZ) {
+        io.rs1_addr := rs
+        io.imm := (imm16_signed.asUInt << 2) // Branch address calculation
+        ctrl_branch_type := BranchTypes.BLEZ
+        ctrl_uses_rs1 := true.B
+        ctrl_uses_rs2 := false.B
       }
 
       is(MIPSOpcodes.OP_J) {
